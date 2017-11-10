@@ -1,0 +1,52 @@
+save
+money 322
+
+weapon
+Pistol
+damage 3
+fire_rate 3.0
+proj_speed 20.0
+ammo 4
+reload 1.5
+inaccuracy 2
+recoil 1.8
+image pistol
+bullet basic
+effect exp_small
+cost 0
+owned 1
+end
+
+weapon
+Sub Machine Gun
+damage 2
+fire_rate 10.0
+proj_speed 20.0
+ammo 20
+reload 3.5
+inaccuracy 3
+recoil 0.7
+image smg
+bullet basic
+effect exp_small
+cost 100
+owned 0
+end
+
+weapon
+Sniper Rifle
+damage 10
+fire_rate 0.75
+proj_speed 30.0
+ammo 2
+reload 4.0
+inaccuracy 0
+recoil 5
+special "pierce"
+image sniper
+bullet sniper bullet
+effect exp_small
+cost 100
+owned 0
+end
+

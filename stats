@@ -5,7 +5,7 @@ weapon
 Pistol
 damage 3
 fire_rate 3.0
-proj_speed 20.0
+proj_speed 22
 ammo 4
 reload 1.5
 inaccuracy 2
@@ -13,6 +13,8 @@ recoil 1.8
 image pistol
 bullet basic
 effect exp_small
+sound pistol
+sound_death pistol impact
 cost 0
 owned 1
 end
@@ -21,7 +23,7 @@ weapon
 Sub Machine Gun
 damage 2
 fire_rate 10.0
-proj_speed 20.0
+proj_speed 22
 ammo 20
 reload 3.5
 inaccuracy 3
@@ -29,6 +31,8 @@ recoil 0.7
 image smg
 bullet basic
 effect exp_small
+sound smg
+sound_death smg impact
 cost 100
 owned 0
 end
@@ -46,7 +50,29 @@ special "pierce"
 image sniper
 bullet sniper bullet
 effect exp_small
+sound none
+sound_death none
 cost 100
 owned 0
+end
+
+
+# ENEMY WEAPONS BEGIN HERE
+
+
+weapon
+Enemy Pistol
+damage 2
+fire_rate 1.5
+proj_speed 16
+ammo 4
+reload 2.75
+inaccuracy 2.75
+recoil 0
+image pistol
+bullet basic_enemy
+effect exp_small
+cost 0
+owned 1
 end
 

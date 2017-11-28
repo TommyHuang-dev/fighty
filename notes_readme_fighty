@@ -3,7 +3,7 @@ basic formatting for making new stuffs:
 save (this is present at the top of every file)
 money # (how much money u got!)
 
-type (currently "weapon" is the only type)
+type (weapons must be in the stats file)
 name (e.g. pistol, must be directly after 'type', NOTE: other parameters do not need to be in this order)
 damage # (damage per shot on weapons, def 1)
 fire_rate # (# is added each frame up to 60, if # is equal to 1.5 it shoots 1.5 times a second, etc.)
@@ -13,12 +13,25 @@ reload # (number of seconds to reload, def 1)
 inaccuracy # (inaccuracy of the weapon in degrees, can be a float.)
 recoil # (degrees it becomes more inaccurate per shot, decreases exponentially, decreasing by 0.03x the difference and 0.005 flat)
 special specName (unused right now, but tags such as "pierce" for sniper will be added)
-image insertImgName (name of the image in the weapons/ folder. All pictures should be 75x75 and .png)
+image insertImgName (name of the image in the weapons/ folder. All pictures should be 75x75 and .png, second frame has a "1" appended to the beginning)
 bullet normal (30x30 sprite for the bullet in folder bullets/)
 effect small_exp (90x90 sprite when the projectile hits something
+sound (name of the sound file .wav)
+sound_death (name of the sound file when it explodes .wav)
 cost # (def 0)
 owned 0 (becomes 1 if you own it, def 0)
 end (put this after all the weapon stats)
+
+type enemy (enemies must be in the enemies file)
+name(names must be unique maybe idk, should be written directly after "type")
+health # (integer)
+weapon (name of a weapon)
+img (name of the image in the enemy_pic/ folder. All pictures should be asdf)
+hitbox # (integer, the length/height of the square for the hitbox, more complicated hitboxes later[tm])
+rarity # (how common enemies are, uncommon enemies become more common later on, and should be stronger)
+movespeed # (float, pixels per frame, player has 5.0 mov_speed)
+boss # (1 = true, 0 = false. Bosses have their own spawning conditions and music)
+end
 
 EXAMPLE FILE:
 save
@@ -26,19 +39,21 @@ money 100
 end
 
 weapon
-pistol
+Pistol
 damage 3
 fire_rate 3.0
-proj_speed 20.0
+proj_speed 22
 ammo 4
-reload 1.0
+reload 1.5
 inaccuracy 2
 recoil 1.8
 image pistol
-bullet normal
-death small_exp
+bullet basic
+effect exp_small
+sound pistol
+sound_death pistol impact
 cost 0
 owned 1
 end
 
-
+# you can add commends in between "end" and the next "weapon". The # is not needed but use it for convention please!

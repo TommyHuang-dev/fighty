@@ -5,6 +5,16 @@ import sys
 import random
 import time
 
+class Enemy:
+    def __init__(self):
+        pass
+
+
+# appends the folder/name.png thingy to the file, instead of 1just name
+def load_pics(folder, name):
+    location = folder + name + ".png"
+    return pygame.image.load(location).convert_alpha()
+
 
 # some stackoverflow bs ¯\_(ツ)_/¯
 def rot_center(image, angle):
@@ -38,6 +48,7 @@ def calc_bullet(bX, bY, acc):
     bulTarX[curBul] = math.cos(bulAng[curBul]) * bulProj[curBul]
 
 
+# this creates the health bar and mana bar
 def create_UI(hp, mp):
     screen.fill(UIHp, (20, 30, 20, hp * 20))
     pygame.draw.rect(screen, [0, 0, 0], [20, 30, 20, 200], 2)
@@ -73,16 +84,16 @@ def move_player(buttons, pSpd):
 
     # redoing dis shit, num[0] = x movement, num[1] = y movement
     if buttons[pygame.K_w]:
-        if not wall_collision(posX, posY - pSpd, 12):
+        if not wall_collision(posX, posY - pSpd, 15):
             num[0] = - pSpd
     elif buttons[pygame.K_s]:
-        if not wall_collision(posX, posY + pSpd, 12):
+        if not wall_collision(posX, posY + pSpd, 15):
             num[0] = pSpd
     if buttons[pygame.K_d]:
-        if not wall_collision(posX + pSpd, posY, 12):
+        if not wall_collision(posX + pSpd, posY, 15):
             num[1] = pSpd
     elif buttons[pygame.K_a]:
-        if not wall_collision(posX - pSpd, posY, 12):
+        if not wall_collision(posX - pSpd, posY, 15):
             num[1] = - pSpd
 
     # move da player
@@ -127,6 +138,7 @@ def draw_map(wall_col, rand, randY):
     for i in range(len(rand)):
         screen.fill(wall_col, rect = (rand[i] - 37, randY[i] - 37, 75, 75))
 
+
 def main_menu():
     pass
 
@@ -145,14 +157,16 @@ TODO LIST:
     - add better visuals on hit for bullets (maybe 2 or 3 frames of effects instead of 1 pic)
     - add knife/ LIGHT SABRE (deflects bullets!)
     - multiple levels?!
+    - sound effects
 
 BUGS: ¯\_(ツ)_/¯
     - no bugs obviously all features
+    - hitboxes sometimes derpy
 
 '''
 
 # initiate pygame and cursors
-pygame.mixer.pre_init(22050, -16, 4, 512)
+pygame.mixer.pre_init(22050, -16, 6, 512)
 pygame.mixer.init()
 pygame.init()
 pygame.font.init()
@@ -221,10 +235,12 @@ wpnAmmo = [parse.wAmmo[0], parse.wAmmo[1]]
 wpnInAcc = [parse.wAcc[0], parse.wAcc[1]]
 relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
 curWpn = 0
+atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
 # player bullet variables
 bulImg = []  # should probably add different pictures
 effImg = []
+effImg2 = []
 bulX = []
 bulY = []
 active = []
@@ -233,14 +249,17 @@ bulProj = []
 bulTarX = []
 bulTarY = []
 bulAng = []
+bulExpSound = []
 curBul = 0
 
-# explosion pics
+# effect pictures and stuff
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
 
-for i in range(10):
+# bullet array :D
+for i in range(12):
     bulImg.append(parse.wBul)
     effImg.append(expSmall)
+    effImg2.append("")
     bulX.append(-50.0)  # top left corner for inactive bullets
     bulY.append(-50.0)
     active.append(0)
@@ -249,21 +268,28 @@ for i in range(10):
     bulTarX.append(-50.0)
     bulTarY.append(-50.0)
     bulAng.append(0.0)
+    bulExpSound.append(parse.wExpSound[curWpn])
 
+#2nd frame of effects (optional)
+for i in range(len(parse.wEff)):
+    try:
+        parse.wEff2.append(load_pics("effects/", "1" + parse.wEff[i]))
+    except pygame.error:
+        parse.wEff2.append("")
 # weapon sprites and effects
 for i in range(len(parse.wImg)):
-    location = "weapons/" + parse.wImg[i] + ".png"
-    parse.wImg[i] = pygame.image.load(location).convert_alpha()
+    parse.wImg[i] = load_pics("weapons/", parse.wImg[i])
 for i in range(len(parse.wBul)):
-    location = "projectiles/" + parse.wBul[i] + ".png"
-    parse.wBul[i] = pygame.image.load(location).convert_alpha()
+    parse.wBul[i] = load_pics("projectiles/", parse.wBul[i])
 for i in range(len(parse.wEff)):
-    location = "effects/" + parse.wEff[i] + ".png"
-    parse.wEff[i] = pygame.image.load(location).convert_alpha()
+    parse.wEff[i] = load_pics("effects/", parse.wEff[i])
+
+# load sounds
+pygame.mixer.set_num_channels(8)
+#asdf
 
 # ========= GAME LOGIC =========
 while True:
-    # print(screen.get_at((350,300)))
     screen.fill(backCol)
 
     # lose inaccuracy from recoil
@@ -311,16 +337,19 @@ while True:
     # switch weapon (knife, wpn 0, wpn 1)
     if pressed[pygame.K_1]:  # knife later
         curWpn = 0
+        atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
         if fireCD <= 30:
             fireCD = 30
 
     elif pressed[pygame.K_2]:
         curWpn = 1
+        atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
         if fireCD <= 30:
             fireCD = 30
 
     elif pressed[pygame.K_3]:
         curWpn = 2
+        atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
         if fireCD <= 30:
             fireCD = 30
 
@@ -330,7 +359,7 @@ while True:
     mouse = pygame.mouse.get_pressed()
     if mouse[0] == 1 and fireCD <= 0 and relCD[curWpn] <= 0:
         curBul += 1
-        if curBul >= 10:
+        if curBul >= 12:
             curBul = 0
         bulX[curBul] = posX
         bulY[curBul] = posY
@@ -343,8 +372,12 @@ while True:
         calc_bullet(bulX[curBul], bulY[curBul], wpnInAcc[curWpn])
         bulImg[curBul] = rot_center(parse.wBul[curWpn], math.degrees(bulAng[curBul]))
         effImg[curBul] = parse.wEff[curWpn]
+        effImg2[curBul] = parse.wEff2[curWpn]
         # recoil!
         wpnInAcc[curWpn] += parse.wCoil[curWpn]
+        # sounds
+        atkSound.play()
+        bulExpSound[curBul] = pygame.mixer.Sound(parse.wExpSound[curWpn])
 
         # set cooldown and automatic reload
         fireCD = 60 / parse.wRate[curWpn]
@@ -357,17 +390,22 @@ while True:
         relCD[curWpn] = parse.wRel[curWpn] * 60
 
     # displaying and resetting bullets
-    for i in range(10):
+    for i in range(12):
         if active[i] > 0:
             # check if the bullet hits a wall, else display it
-            if wall_collision(bulX[i], bulY[i], 2) or bulX[i] + 15 > disLength or bulX[i] < 100 or bulY[i] + 15 > disHeight or bulY[i] < 0:
-                active[i] = -1
-                bulImg[i] = effImg[i]
-            else:
-                bulX[i] += bulTarX[i] * timeSlow[0]
-                bulY[i] += bulTarY[i] * timeSlow[0]
-                screen.blit(bulImg[i], (bulX[i] - 15, bulY[i] - 15))
-                # add hitting enemies here
+            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i]** 2)) // 15 + 1  # number of times to check for collision
+            for j in range(gap):
+                if wall_collision(bulX[i], bulY[i], 2) or bulX[i] + 15 > disLength or bulX[i] < 105 or bulY[i] + 15 > disHeight or bulY[i] < 5:
+                    active[i] = -1
+                    bulImg[i] = effImg[i]
+                    bulExpSound[i].play()
+                    break
+                else:
+                    bulX[i] += bulTarX[i] * timeSlow[0] / gap
+                    bulY[i] += bulTarY[i] * timeSlow[0] / gap
+                    # add hitting enemies here
+                if j == gap - 1:
+                    screen.blit(bulImg[i], (bulX[i] - 15, bulY[i] - 15))
 
     # ------------ ENEMY STUFF ------------ #
     # LITERALLY NOTHING
@@ -377,10 +415,16 @@ while True:
     draw_map(wallCol, wallRandom, wallRandomY)
 
     # particle effects for bullets
-    for i in range(10):
-        if -5 <= active[i] < 0:
-            active[i] += -1 * timeSlow[0]
+    for i in range(12):
+        if -15 <= active[i] < 0:
             screen.blit(bulImg[i], (bulX[i] - 45, bulY[i] - 45))
+            active[i] += -1 * timeSlow[0]
+        # second frame effect
+        if -6.5 <= active[i] < -5.5 and effImg2[i] != "":
+            bulImg[i] = effImg2[i]
+            active[i] += -1
+        elif -6.5 <= active[i] < -5.5:
+            active[i] = -16
 
     # draw crosshair
     if wpnInAcc[curWpn] > 0:

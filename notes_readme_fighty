@@ -12,7 +12,7 @@ ammo # (number of bullets before needing to reload, -1 means it will never run o
 reload # (number of seconds to reload, def 1)
 inaccuracy # (inaccuracy of the weapon in degrees, can be a float.)
 recoil # (degrees it becomes more inaccurate per shot, decreases exponentially, decreasing by 0.03x the difference and 0.005 flat)
-special specName (unused right now, but tags such as "pierce" for sniper will be added)
+speed # (1 = no effect on speed, multiplier, turrets would have a 0 cuz u cant move. Please dont use negatives!)
 image insertImgName (name of the image in the weapons/ folder. All pictures should be 75x75 and .png, second frame has a "1" appended to the beginning)
 bullet normal (30x30 sprite for the bullet in folder bullets/)
 effect small_exp (90x90 sprite when the projectile hits something
@@ -49,6 +49,7 @@ inaccuracy 2
 recoil 1.8
 image pistol
 bullet basic
+speed 1.0
 effect exp_small
 sound pistol
 sound_death pistol impact
@@ -57,3 +58,5 @@ owned 1
 end
 
 # you can add commends in between "end" and the next "weapon". The # is not needed but use it for convention please!
+
+

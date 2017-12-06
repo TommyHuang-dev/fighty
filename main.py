@@ -16,6 +16,37 @@ def load_pics(folder, name):
     return pygame.image.load(location).convert_alpha()
 
 
+# more stackoverflow stuff
+def slow_music():
+    pass
+
+
+# finds grid location from coordinates
+# GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
+#                      and 0 from the top. It is 11x8, first one and last two never have walls
+#                      Ends at last 50 units from the right. Each wall is 75x75, and is in total a
+#                      825x600 grid
+def grid_location(x, y):
+    loc = [0, 0]
+    # x
+    if x <= 125:
+        loc[0] = 0
+    elif x >= 950:
+        loc[0] = 10
+    else:
+        for i in range(11):
+            x_center = 125 + i * 75 + 37
+            if x_center - 37 <= x <= x_center + 37:
+                loc[0] = i
+    # y
+    for i in range(8):
+        y_center = i * 75 + 37
+        if y_center - 37 <= y <= y_center + 37:
+            loc[1] = i
+
+    return loc
+
+
 # some stackoverflow bs ¯\_(ツ)_/¯
 def rot_center(image, angle):
     """rotate a Surface, maintaining position."""
@@ -119,8 +150,8 @@ def move_player(buttons, pSpd):
 def wall_collision(x, y, hitbox):
     global wallRandom, wallRandomY
     for i in range(len(wallRandom)):
-        if wallRandom[i] + hitbox + 37 > x > wallRandom[i] - hitbox - 38 and \
-                            wallRandomY[i] + hitbox + 37 > y > wallRandomY[i] - hitbox - 38:
+        if wallRandom[i] + hitbox + 37 > x > wallRandom[i] - hitbox - 37 and \
+                            wallRandomY[i] + hitbox + 37 > y > wallRandomY[i] - hitbox - 37:
             return True
     return False
 
@@ -194,13 +225,17 @@ UIHp = [250, 70, 70]
 UIMana = [100, 100, 240]
 wallCol = [120, 120, 120]
 
+# GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
+#                      and 0 from the top. It is 11x8, first one and last two never have walls
+#                      Ends at last 50 units from the right. Each wall is 75x75, and is in total a
+#                      825x600 grid
 wallRandom = []
 wallRandomY = []
 wallCount = 0  # number of walls in total, should not exceed 8
 wallCountC = 0  # number of walls in a single column, should not exceed 3
 ran = 0
 wallGrid = []
-for i in range(12):  # x axis
+for i in range(11):  # x axis
     wallGrid.append([])
     wallCountC = 0
     for k in range(8):  # y axis
@@ -226,7 +261,7 @@ timeSlow = [1.0, 1.0]  # self slow, enemy slow
 playerImg = pygame.image.load("player.png").convert_alpha()
 posX = 150.0  # start in the top left corner
 posY = 50.0
-speed = 5.0
+baseSpeed = 5.0
 health = [10, 10]  # min/max hp
 mana = [100, 100]
 manaCharge = [0, 30]
@@ -235,7 +270,11 @@ wpnAmmo = [parse.wAmmo[0], parse.wAmmo[1]]
 wpnInAcc = [parse.wAcc[0], parse.wAcc[1]]
 relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
 curWpn = 0
+speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
+
+# for ai
+gridLoc = [0, 0]
 
 # player bullet variables
 bulImg = []  # should probably add different pictures
@@ -284,9 +323,12 @@ for i in range(len(parse.wBul)):
 for i in range(len(parse.wEff)):
     parse.wEff[i] = load_pics("effects/", parse.wEff[i])
 
-# load sounds
-pygame.mixer.set_num_channels(8)
-#asdf
+# load sounds, channel 0 is reserved for music, all others used for sound effects
+ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
+pygame.mixer.set_num_channels(10)
+channel0 = pygame.mixer.Channel(0)
+channel0.play(ingameMusic, loops=-1)
+# slow motion music
 
 # ========= GAME LOGIC =========
 while True:
@@ -313,7 +355,7 @@ while True:
     else:
         manaCharge[0] += -1
         if manaCharge[0] <= 0 and mana[0] < mana[1]:
-            mana[0] += 0.25
+            mana[0] += 0.2
     if mana[0] <= 0:
         timeSlow[0] = 1.0
         timeSlow[1] = 1.0
@@ -338,20 +380,24 @@ while True:
     if pressed[pygame.K_1]:  # knife later
         curWpn = 0
         atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
-        if fireCD <= 30:
-            fireCD = 30
-
+        speed = baseSpeed * parse.wSpeed[curWpn]
+        if fireCD <= 15:
+            fireCD = 15
     elif pressed[pygame.K_2]:
         curWpn = 1
         atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
-        if fireCD <= 30:
-            fireCD = 30
-
+        speed = baseSpeed * parse.wSpeed[curWpn]
+        if fireCD <= 15:
+            fireCD = 15
     elif pressed[pygame.K_3]:
         curWpn = 2
         atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
-        if fireCD <= 30:
-            fireCD = 30
+        speed = baseSpeed * parse.wSpeed[curWpn]
+        if fireCD <= 15:
+            fireCD = 15
+
+    # find location on grid for the ai
+    gridLoc = grid_location(posX, posY)
 
     # ------------ SHOOTING AND BULLET STUFF ------------ #
     # shooting
@@ -393,10 +439,13 @@ while True:
     for i in range(12):
         if active[i] > 0:
             # check if the bullet hits a wall, else display it
-            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i]** 2)) // 15 + 1  # number of times to check for collision
+            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i]** 2)) // 10 + 1  # number of times to check for collision
             for j in range(gap):
-                if wall_collision(bulX[i], bulY[i], 2) or bulX[i] + 15 > disLength or bulX[i] < 105 or bulY[i] + 15 > disHeight or bulY[i] < 5:
+                if wall_collision(bulX[i], bulY[i], 3) or bulX[i] + 10 > disLength or bulX[i] < 110 or bulY[i] + 10 > disHeight or bulY[i] < 10:
+                    # draw the bullet for one frame before death
+                    screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
                     active[i] = -1
+                    # change picture to explosion!!!
                     bulImg[i] = effImg[i]
                     bulExpSound[i].play()
                     break
@@ -405,7 +454,8 @@ while True:
                     bulY[i] += bulTarY[i] * timeSlow[0] / gap
                     # add hitting enemies here
                 if j == gap - 1:
-                    screen.blit(bulImg[i], (bulX[i] - 15, bulY[i] - 15))
+                    center = bulImg[i].get_rect()
+                    screen.blit(bulImg[i], (bulX[i] - (center[2]/2), bulY[i] - (center[3]/2)))
 
     # ------------ ENEMY STUFF ------------ #
     # LITERALLY NOTHING

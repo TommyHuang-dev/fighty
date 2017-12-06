@@ -1,6 +1,7 @@
 save
 money 322
 
+
 weapon
 Pistol
 damage 3
@@ -12,6 +13,7 @@ inaccuracy 2
 recoil 1.8
 image pistol
 bullet basic
+speed 1.0
 effect exp_small
 sound pistol
 sound_death pistol impact
@@ -28,6 +30,7 @@ ammo 20
 reload 3.5
 inaccuracy 3
 recoil 0.7
+speed 0.95
 image smg
 bullet basic
 effect exp_small
@@ -48,6 +51,7 @@ inaccuracy 0
 recoil 5
 special "pierce"
 image sniper
+speed 0.7
 bullet sniper bullet
 effect exp_small
 sound none

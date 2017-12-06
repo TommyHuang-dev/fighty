@@ -40,6 +40,9 @@ def parse_file(open_file):
             elif cur_line[0] == "ammo":
                 wAmmo.append("")
                 wAmmo[cur_wpn] = (int(cur_line[1]))
+            elif cur_line[0] == "speed":
+                wSpeed.append("")
+                wSpeed[cur_wpn] = (float(cur_line[1]))
             elif cur_line[0] == "reload":
                 wRel.append("")
                 wRel[cur_wpn] = (float(cur_line[1]))
@@ -157,6 +160,7 @@ wAcc = []
 wCoil = []
 wImg = []
 wBul = []
+wSpeed = []
 wEff = []
 wEff2 = []
 wSound = []

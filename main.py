@@ -29,21 +29,8 @@ def slow_music():
 def grid_location(x, y):
     loc = [0, 0]
     # x
-    if x <= 125:
-        loc[0] = 0
-    elif x >= 950:
-        loc[0] = 10
-    else:
-        for i in range(11):
-            x_center = 125 + i * 75 + 37
-            if x_center - 37 <= x <= x_center + 37:
-                loc[0] = i
-    # y
-    for i in range(8):
-        y_center = i * 75 + 37
-        if y_center - 37 <= y <= y_center + 37:
-            loc[1] = i
-
+    loc[0] = (x - 100)//75
+    loc[1] = y//75
     return loc
 
 
@@ -166,8 +153,10 @@ def move_enemy():
 
 def draw_map(wall_col, rand, randY):
     pygame.draw.rect(screen, wall_col, (102, 2, 896, 596), 5)
+    screen.fill((45, 45, 45), rect = (disLength - 7, 75, 7, 75))
+    screen.fill((45, 45, 45), rect = (disLength - 7, disHeight - 150, 7, 75))
     for i in range(len(rand)):
-        screen.fill(wall_col, rect = (rand[i] - 37, randY[i] - 37, 75, 75))
+        screen.fill(wall_col, rect = (rand[i] - 38, randY[i] - 38, 76, 76))
 
 
 def main_menu():
@@ -235,17 +224,17 @@ wallCount = 0  # number of walls in total, should not exceed 8
 wallCountC = 0  # number of walls in a single column, should not exceed 3
 ran = 0
 wallGrid = []
-for i in range(11):  # x axis
+for i in range(12):  # x axis
     wallGrid.append([])
     wallCountC = 0
     for k in range(8):  # y axis
         # better walls[tm]
-        if random.randint(0, 60) + ran >= 56 and 1 <= i <= 9 and wallCountC < 3 and wallCount < 9:
+        if random.randint(0, 60) + ran >= 56 and 2 <= i <= 10 and wallCountC < 3 and wallCount < 9:
             wallGrid[i].append(True)
             wallCountC += 1
             wallCount += 1
             ran = 5
-            wallRandom.append(125 + i * 75 + 37) # center of the wall X and Y
+            wallRandom.append(100 + i * 75 + 37) # center of the wall X and Y
             wallRandomY.append(k * 75 + 37)
         else:
             wallGrid[i].append(False)
@@ -323,6 +312,29 @@ for i in range(len(parse.wBul)):
 for i in range(len(parse.wEff)):
     parse.wEff[i] = load_pics("effects/", parse.wEff[i])
 
+# ENEMY STUFF
+# global stats
+numEnemy = []
+
+# individual stats
+for i in range(len(parse.eImg)):
+    parse.eImg[i] = load_pics("enemy_pic/", parse.eImg[i])
+
+enemyHP = []
+enemyImg = []
+enemyBox = []
+enemySpeed = []
+enemyTar = []  # an array of tile positions, where the enemy wants to move
+enemyNextTar = []  # the next tile it should try to move to, 2 values of the tile's position relative to its cur. position
+for i in range(6):  # maximum 6 enemies
+    enemyHP.append(parse.eHP[0])
+    enemyImg.append(parse.eImg[0])
+    enemyBox.append(parse.eBox[0])
+    enemySpeed.append(parse.eSpeed[0])
+    enemyTar.append([0, 0])
+    enemyNextTar.append([0, 0])
+
+
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
 pygame.mixer.set_num_channels(10)
@@ -359,6 +371,9 @@ while True:
     if mana[0] <= 0:
         timeSlow[0] = 1.0
         timeSlow[1] = 1.0
+
+    # ------------ ENEMY STUFF ------------ #
+    # LITERALLY NOTHING
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()
@@ -398,6 +413,7 @@ while True:
 
     # find location on grid for the ai
     gridLoc = grid_location(posX, posY)
+    pygame.draw.rect(screen, (100, 100, 100), (100 + gridLoc[0] * 75, gridLoc[1] * 75, 75, 75), 1)
 
     # ------------ SHOOTING AND BULLET STUFF ------------ #
     # shooting
@@ -457,13 +473,6 @@ while True:
                     center = bulImg[i].get_rect()
                     screen.blit(bulImg[i], (bulX[i] - (center[2]/2), bulY[i] - (center[3]/2)))
 
-    # ------------ ENEMY STUFF ------------ #
-    # LITERALLY NOTHING
-
-    # ------------ UI ELEMENTS ------------ #
-    # draw walls and stuff
-    draw_map(wallCol, wallRandom, wallRandomY)
-
     # particle effects for bullets
     for i in range(12):
         if -15 <= active[i] < 0:
@@ -475,6 +484,10 @@ while True:
             active[i] += -1
         elif -6.5 <= active[i] < -5.5:
             active[i] = -16
+
+    # ------------ UI ELEMENTS ------------ #
+    # draw walls and stuff
+    draw_map(wallCol, wallRandom, wallRandomY)
 
     # draw crosshair
     if wpnInAcc[curWpn] > 0:

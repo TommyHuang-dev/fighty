@@ -4,6 +4,7 @@ import math
 import sys
 import random
 import time
+import ai
 
 class Enemy:
     def __init__(self):
@@ -181,7 +182,6 @@ TODO LIST:
 
 BUGS: ¯\_(ツ)_/¯
     - no bugs obviously all features
-    - hitboxes sometimes derpy
 
 '''
 
@@ -265,38 +265,23 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 # for ai
 gridLoc = [0, 0]
 
-# player bullet variables
-bulImg = []  # should probably add different pictures
-effImg = []
-effImg2 = []
-bulX = []
-bulY = []
-active = []
-bulDmg = []
-bulProj = []
-bulTarX = []
-bulTarY = []
-bulAng = []
-bulExpSound = []
-curBul = 0
-
 # effect pictures and stuff
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
 
-# bullet array :D
-for i in range(12):
-    bulImg.append(parse.wBul)
-    effImg.append(expSmall)
-    effImg2.append("")
-    bulX.append(-50.0)  # top left corner for inactive bullets
-    bulY.append(-50.0)
-    active.append(0)
-    bulDmg.append(0)
-    bulProj.append(0.0)
-    bulTarX.append(-50.0)
-    bulTarY.append(-50.0)
-    bulAng.append(0.0)
-    bulExpSound.append(parse.wExpSound[curWpn])
+# player bullet variables
+bulImg = [parse.wBul] * 12  # should probably add different pictures
+effImg = [expSmall] * 12
+effImg2 = [""] * 12
+bulX = [-50.0] * 12
+bulY = [-50.0] * 12
+active = [0] * 12
+bulDmg = [0] * 12
+bulProj = [0.0] * 12
+bulTarX = [-50.0] * 12
+bulTarY = [-50.0] * 12
+bulAng = [0.0] * 12
+bulExpSound = [parse.wExpSound[curWpn]] * 12
+curBul = 0
 
 #2nd frame of effects (optional)
 for i in range(len(parse.wEff)):
@@ -314,26 +299,22 @@ for i in range(len(parse.wEff)):
 
 # ENEMY STUFF
 # global stats
-numEnemy = []
+numEnemy = [0,5]  # which enemies to check
 
 # individual stats
 for i in range(len(parse.eImg)):
     parse.eImg[i] = load_pics("enemy_pic/", parse.eImg[i])
 
-enemyHP = []
-enemyImg = []
-enemyBox = []
-enemySpeed = []
-enemyTar = []  # an array of tile positions, where the enemy wants to move
-enemyNextTar = []  # the next tile it should try to move to, 2 values of the tile's position relative to its cur. position
-for i in range(6):  # maximum 6 enemies
-    enemyHP.append(parse.eHP[0])
-    enemyImg.append(parse.eImg[0])
-    enemyBox.append(parse.eBox[0])
-    enemySpeed.append(parse.eSpeed[0])
-    enemyTar.append([0, 0])
-    enemyNextTar.append([0, 0])
-
+enemyHP = [parse.eHP[0]] * 6
+enemyImg = [parse.eImg[0]] * 6
+enemyBox = [parse.eBox[0]] * 6
+enemySpeed = [parse.eSpeed[0]] * 6
+enemyX = [disLength - 10] * 6
+enemyY = [75 + 37] * 6
+enemyGridLoc = grid_location(75 + 37, disLength - 10) * 6
+enemyTar = [[0, 0]] * 6  # an array of tile positions, where the enemy wants to move
+enemyNextTar = [[0, 0]] * 6  # which x, y direction enemy should move to (e.g. [-1,0] is West)
+enemyPath = [[]] * 6
 
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
@@ -373,7 +354,12 @@ while True:
         timeSlow[1] = 1.0
 
     # ------------ ENEMY STUFF ------------ #
-    # LITERALLY NOTHING
+    # Debugging da enemies
+    for i in range(6):
+        enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
+        enemyPath[i] = ai.choose_tile(wallGrid, enemyGridLoc[i][0], enemyGridLoc[i][1], gridLoc[0], gridLoc[1], 10)
+    for i in range(len(enemyPath[0])):
+        pygame.draw.rect(screen, (255, 75, 75), (120 + enemyPath[0][i][0] * 75, 20 + enemyPath[0][i][1] * 75, 35, 35), 3)
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()

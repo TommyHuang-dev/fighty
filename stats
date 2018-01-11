@@ -44,7 +44,7 @@ weapon
 Sniper Rifle
 damage 10
 fire_rate 0.75
-proj_speed 30.0
+proj_speed 35.0
 ammo 2
 reload 4.0
 inaccuracy 0

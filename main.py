@@ -220,6 +220,7 @@ wallCol = [120, 120, 120]
 #                      825x600 grid
 wallRandom = []
 wallRandomY = []
+wallCoords = []  # walls on the 12x8 array
 wallCount = 0  # number of walls in total, should not exceed 8
 wallCountC = 0  # number of walls in a single column, should not exceed 3
 ran = 0
@@ -236,6 +237,7 @@ for i in range(12):  # x axis
             ran = 5
             wallRandom.append(100 + i * 75 + 37) # center of the wall X and Y
             wallRandomY.append(k * 75 + 37)
+            wallCoords.append([i, k])
         else:
             wallGrid[i].append(False)
             ran = 0
@@ -261,6 +263,7 @@ relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
 curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
+EqWpnName = ["Sub Machine Gun", "Sniper Rifle"]  # the 2 weapons used
 
 # for ai
 gridLoc = [0, 0]
@@ -305,6 +308,8 @@ numEnemy = [0,5]  # which enemies to check
 for i in range(len(parse.eImg)):
     parse.eImg[i] = load_pics("enemy_pic/", parse.eImg[i])
 
+enemyReEvaluate = [0, 30]  # every 60 ticks re evaluate the path chosen
+
 enemyHP = [parse.eHP[0]] * 6
 enemyImg = [parse.eImg[0]] * 6
 enemyBox = [parse.eBox[0]] * 6
@@ -324,17 +329,45 @@ channel0.play(ingameMusic, loops=-1)
 # slow motion music
 
 # ========= GAME LOGIC =========
+# get the weapons that the player has equipped
+wpnName = ["Sub Machine Gun", "Sniper Rifle"]  # the 2 weapons used
+for i in range(1, -1, -1):
+    if EqWpnName[i] in parse.wName:
+        ArrayLoc = parse.wName.index(EqWpnName[i])
+
+        # theres DEFINITELY a better way of doing dis
+        parse.wName = [parse.wName[ArrayLoc]] + parse.wName
+        parse.wDmg = [parse.wDmg[ArrayLoc]] + parse.wDmg
+        parse.wRate = [parse.wRate[ArrayLoc]] + parse.wRate
+        parse.wProj = [parse.wProj[ArrayLoc]] + parse.wProj
+        parse.wAmmo = [parse.wAmmo[ArrayLoc]] + parse.wAmmo
+        parse.wRel = [parse.wRel[ArrayLoc]] + parse.wRel
+        parse.wAcc = [parse.wAcc[ArrayLoc]] + parse.wAcc
+        parse.wCoil = [parse.wCoil[ArrayLoc]] + parse.wCoil
+        parse.wImg = [parse.wImg[ArrayLoc]] + parse.wImg
+        parse.wBul = [parse.wBul[ArrayLoc]] + parse.wBul
+        parse.wSpeed = [parse.wSpeed[ArrayLoc]] + parse.wSpeed
+        parse.wEff = [parse.wEff[ArrayLoc]] + parse.wEff
+        parse.wEff2 = [parse.wEff2[ArrayLoc]] + parse.wEff2
+        parse.wSound = [parse.wSound[ArrayLoc]] + parse.wSound
+        parse.wExpSound = [parse.wExpSound[ArrayLoc]] + parse.wExpSound
+        parse.wCost = [parse.wCost[ArrayLoc]] + parse.wCost
+        parse.wOwned = [parse.wOwned[ArrayLoc]] + parse.wOwned
+    else:
+        print("A weapon was not found in the data!!! F")
+
+wpnAmmo = [parse.wAmmo[0], parse.wAmmo[1]]
+wpnInAcc = [parse.wAcc[0], parse.wAcc[1]]
+relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
+curWpn = 0
+speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
+atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
+
 while True:
     screen.fill(backCol)
 
-    # lose inaccuracy from recoil
-    for i in range(2):
-        if wpnInAcc[i] > parse.wAcc[i]:
-            wpnInAcc[i] = wpnInAcc[i] - timeSlow[0] * ((wpnInAcc[i] - parse.wAcc[i]) * 0.03) - 0.01
-        else:
-            wpnInAcc[i] = parse.wAcc[i]
-
     # tick down timers, recharge mana
+    enemyReEvaluate[0] += -1
     for i in range(2):
         relCD[i] += -1 * timeSlow[0]
         if -1 <relCD[i] <= 0:
@@ -354,15 +387,28 @@ while True:
         timeSlow[1] = 1.0
 
     # ------------ ENEMY STUFF ------------ #
-    # Debugging da enemies
-    for i in range(6):
-        enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
-        enemyPath[i] = ai.choose_tile(wallGrid, enemyGridLoc[i][0], enemyGridLoc[i][1], gridLoc[0], gridLoc[1], 10)
+    '''
+    # Every 0.5sec, evaluate a path for every enemy to the player
+    if enemyReEvaluate[0] <= 0:
+        enemyReEvaluate[0] = enemyReEvaluate[1]
+        for i in range(numEnemy[0], numEnemy[1] + 1):
+            enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
+            enemyPath[i] = ai.choose_tile(wallCoords, enemyGridLoc[i][0], enemyGridLoc[i][1], gridLoc[0], gridLoc[1], 10)
+
+    # debugging, draw red squares where their path is
     for i in range(len(enemyPath[0])):
         pygame.draw.rect(screen, (255, 75, 75), (120 + enemyPath[0][i][0] * 75, 20 + enemyPath[0][i][1] * 75, 35, 35), 3)
+    '''
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()
+
+    # lose inaccuracy from recoil
+    for i in range(2):
+        if wpnInAcc[i] > parse.wAcc[i]:
+            wpnInAcc[i] = wpnInAcc[i] - timeSlow[0] * ((wpnInAcc[i] - parse.wAcc[i]) * 0.03) - 0.01
+        else:
+            wpnInAcc[i] = parse.wAcc[i]
 
     # SLOW DOWN TIME...
     if timeBuffer[0] <= 0 and pressed[pygame.K_SPACE]:
@@ -386,12 +432,6 @@ while True:
             fireCD = 15
     elif pressed[pygame.K_2]:
         curWpn = 1
-        atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
-        speed = baseSpeed * parse.wSpeed[curWpn]
-        if fireCD <= 15:
-            fireCD = 15
-    elif pressed[pygame.K_3]:
-        curWpn = 2
         atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
         speed = baseSpeed * parse.wSpeed[curWpn]
         if fireCD <= 15:

@@ -60,6 +60,25 @@ cost 100
 owned 0
 end
 
+weapon
+Rocket Launcher
+damage 100000
+fire_rate 0.5
+proj_speed 12.0
+ammo 1
+reload 2.0
+inaccuracy 2.25
+recoil 5
+image sniper
+speed 0.5
+bullet poop
+effect exp_HUGE
+sound none
+sound_death none
+cost 100
+owned 0
+end
+
 
 # ENEMY WEAPONS BEGIN HERE
 

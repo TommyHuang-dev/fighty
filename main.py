@@ -4,7 +4,7 @@ import math
 import sys
 import random
 import time
-import ai
+from pathfinder import ai
 
 class Enemy:
     def __init__(self):
@@ -30,8 +30,8 @@ def slow_music():
 def grid_location(x, y):
     loc = [0, 0]
     # x
-    loc[0] = (x - 100)//75
-    loc[1] = y//75
+    loc[0] = int((x - 100)//75)
+    loc[1] = int(y//75)
     return loc
 
 
@@ -185,7 +185,7 @@ BUGS: ¯\_(ツ)_/¯
 
 '''
 
-# initiate pygame and cursors
+# initiate pygame and cursors`
 pygame.mixer.pre_init(22050, -16, 6, 512)
 pygame.mixer.init()
 pygame.init()
@@ -225,13 +225,14 @@ wallCount = 0  # number of walls in total, should not exceed 8
 wallCountC = 0  # number of walls in a single column, should not exceed 3
 ran = 0
 wallGrid = []
+
 for i in range(12):  # x axis
     wallGrid.append([])
     wallCountC = 0
     for k in range(8):  # y axis
         # better walls[tm]
         if random.randint(0, 60) + ran >= 56 and 2 <= i <= 10 and wallCountC < 3 and wallCount < 9:
-            wallGrid[i].append(True)
+            wallGrid[i].append(1)
             wallCountC += 1
             wallCount += 1
             ran = 5
@@ -239,7 +240,7 @@ for i in range(12):  # x axis
             wallRandomY.append(k * 75 + 37)
             wallCoords.append([i, k])
         else:
-            wallGrid[i].append(False)
+            wallGrid[i].append(0)
             ran = 0
 
 # global game variables
@@ -263,10 +264,10 @@ relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
 curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
-EqWpnName = ["Sub Machine Gun", "Sniper Rifle"]  # the 2 weapons used
 
 # for ai
 gridLoc = [0, 0]
+gridLocPrev = gridLoc
 
 # effect pictures and stuff
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
@@ -302,7 +303,7 @@ for i in range(len(parse.wEff)):
 
 # ENEMY STUFF
 # global stats
-numEnemy = [0,5]  # which enemies to check
+numEnemy = 6 # add more if needed!
 
 # individual stats
 for i in range(len(parse.eImg)):
@@ -310,16 +311,16 @@ for i in range(len(parse.eImg)):
 
 enemyReEvaluate = [0, 30]  # every 60 ticks re evaluate the path chosen
 
-enemyHP = [parse.eHP[0]] * 6
-enemyImg = [parse.eImg[0]] * 6
-enemyBox = [parse.eBox[0]] * 6
-enemySpeed = [parse.eSpeed[0]] * 6
-enemyX = [disLength - 10] * 6
-enemyY = [75 + 37] * 6
-enemyGridLoc = grid_location(75 + 37, disLength - 10) * 6
-enemyTar = [[0, 0]] * 6  # an array of tile positions, where the enemy wants to move
-enemyNextTar = [[0, 0]] * 6  # which x, y direction enemy should move to (e.g. [-1,0] is West)
-enemyPath = [[]] * 6
+enemyHP = [parse.eHP[0]] * numEnemy
+enemyImg = [parse.eImg[0]] * numEnemy
+enemyBox = [parse.eBox[0]] * numEnemy
+enemySpeed = [parse.eSpeed[0]] * numEnemy
+enemyX = [disLength - 10] * numEnemy
+enemyY = [75 + 37] * numEnemy
+enemyGridLoc = grid_location(75 + 37, disLength - 10) * numEnemy
+enemyTar = [[0, 0]] * numEnemy  # an array of tile positions, where the enemy wants to move
+enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to (e.g. [-1,0] is West)
+enemyPath = [[]] * numEnemy
 
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
@@ -330,11 +331,10 @@ channel0.play(ingameMusic, loops=-1)
 
 # ========= GAME LOGIC =========
 # get the weapons that the player has equipped
-wpnName = ["Sub Machine Gun", "Sniper Rifle"]  # the 2 weapons used
+EqWpnName = ["Pistol", "Sub Machine Gun"]  # the 2 weapons used
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:
         ArrayLoc = parse.wName.index(EqWpnName[i])
-
         # theres DEFINITELY a better way of doing dis
         parse.wName = [parse.wName[ArrayLoc]] + parse.wName
         parse.wDmg = [parse.wDmg[ArrayLoc]] + parse.wDmg
@@ -356,6 +356,7 @@ for i in range(1, -1, -1):
     else:
         print("A weapon was not found in the data!!! F")
 
+wpnName = [parse.wName[0], parse.wName[1]]  # the 2 weapons used
 wpnAmmo = [parse.wAmmo[0], parse.wAmmo[1]]
 wpnInAcc = [parse.wAcc[0], parse.wAcc[1]]
 relCD = [0, 0]  # used by weapon 1 and weapon 2 when reloading.
@@ -387,18 +388,20 @@ while True:
         timeSlow[1] = 1.0
 
     # ------------ ENEMY STUFF ------------ #
-    '''
     # Every 0.5sec, evaluate a path for every enemy to the player
+    # path finding for the enemies, using some shady algorithm from online
     if enemyReEvaluate[0] <= 0:
-        enemyReEvaluate[0] = enemyReEvaluate[1]
-        for i in range(numEnemy[0], numEnemy[1] + 1):
-            enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
-            enemyPath[i] = ai.choose_tile(wallCoords, enemyGridLoc[i][0], enemyGridLoc[i][1], gridLoc[0], gridLoc[1], 10)
+        # mark player location
+        gridLocPrev = gridLoc
+        gridLoc = grid_location(posX, posY)
+        pygame.draw.rect(screen, (100, 100, 100), (100 + gridLoc[0] * 75, gridLoc[1] * 75, 75, 75), 1)
+        wallGrid[gridLocPrev[0]][gridLocPrev[1]] = 1
 
-    # debugging, draw red squares where their path is
-    for i in range(len(enemyPath[0])):
-        pygame.draw.rect(screen, (255, 75, 75), (120 + enemyPath[0][i][0] * 75, 20 + enemyPath[0][i][1] * 75, 35, 35), 3)
-    '''
+        # reset the delay, checks once per 0.5s
+        enemyReEvaluate[0] = enemyReEvaluate[1]
+        # loop through all of the enemies and get da paths
+        for i in range(numEnemy):
+            enemyPath[i] = ai.search(wallGrid, enemyX[i], enemyY[i])
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()
@@ -436,10 +439,6 @@ while True:
         speed = baseSpeed * parse.wSpeed[curWpn]
         if fireCD <= 15:
             fireCD = 15
-
-    # find location on grid for the ai
-    gridLoc = grid_location(posX, posY)
-    pygame.draw.rect(screen, (100, 100, 100), (100 + gridLoc[0] * 75, gridLoc[1] * 75, 75, 75), 1)
 
     # ------------ SHOOTING AND BULLET STUFF ------------ #
     # shooting
@@ -481,7 +480,7 @@ while True:
     for i in range(12):
         if active[i] > 0:
             # check if the bullet hits a wall, else display it
-            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i]** 2)) // 10 + 1  # number of times to check for collision
+            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 10 + 1  # number of times to check for collision
             for j in range(gap):
                 if wall_collision(bulX[i], bulY[i], 3) or bulX[i] + 10 > disLength or bulX[i] < 110 or bulY[i] + 10 > disHeight or bulY[i] < 10:
                     # draw the bullet for one frame before death

@@ -11,37 +11,15 @@ from pathfinder.pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinder.pathfinding.core.grid import Grid
 from pathfinder.pathfinding.finder.a_star import AStarFinder
 
-matrix = [
-  [0, 0, 0],
-  [0, 1, 0],
-  [0, 0, 0]
-]
-grid = Grid(matrix=matrix)
+def find_path(wall_grid, enemy_loc, player_loc):
+    matrix = wall_grid
+    grid = Grid(matrix=matrix)
 
-start = grid.node(0, 0)
-end = grid.node(2, 2)
+    end = grid.node(enemy_loc[0], enemy_loc[1])
+    start = grid.node(player_loc[0], player_loc[1])
 
-finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-path, runs = finder.find_path(start, end, grid)
+    finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+    path, runs = finder.find_path(start, end, grid)
 
-print('operations:', runs, 'path length:', len(path))
-print(grid.grid_str(path=path, start=start, end=end))
-
-
-'''
-EXAMPLE GRID (x and y are flipped, look at it with ur head tilted 90 degrees CCW:
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, True, ----, ----, ----, True, ----], 
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, ----, ----, True, ----, ----, ----], 
-[----, ----, ----, ----, True, ----, ----, ----], 
-[----, ----, ----, True, ----, ----, ----, ----], 
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, ----, ----, ----, ----, ----, ----], 
-[----, ----, ----, True, ----, ----, ----, ----]]
-
-first and last are always empty
-
-'''
+    print(grid.grid_str(path=path, start=start, end=end))
+    return path

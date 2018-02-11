@@ -51,7 +51,7 @@ class Grid(object):
         :param y: y pos
         :return:
         """
-        return self.nodes[y][x]
+        return self.nodes[x][y]
 
     def inside(self, x, y):
         """

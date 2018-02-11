@@ -24,14 +24,23 @@ def slow_music():
 
 # finds grid location from coordinates
 # GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
-#                      and 0 from the top. It is 11x8, first one and last two never have walls
+#                      and 0 from the top. It is 12x8, first one and last two never have walls
 #                      Ends at last 50 units from the right. Each wall is 75x75, and is in total a
-#                      825x600 grid
+#                      825x600 gridw
 def grid_location(x, y):
     loc = [0, 0]
     # x
     loc[0] = int((x - 100)//75)
     loc[1] = int(y//75)
+    if x > disLength:
+        x = 11
+    elif x < 0:
+        x = 0
+    if y > disHeight:
+        y = 7
+    elif y < 0:
+        y = 0
+
     return loc
 
 
@@ -267,7 +276,6 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
 # for ai
 gridLoc = [0, 0]
-gridLocPrev = gridLoc
 
 # effect pictures and stuff
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
@@ -391,17 +399,15 @@ while True:
     # Every 0.5sec, evaluate a path for every enemy to the player
     # path finding for the enemies, using some shady algorithm from online
     if enemyReEvaluate[0] <= 0:
-        # mark player location
-        gridLocPrev = gridLoc
         gridLoc = grid_location(posX, posY)
         pygame.draw.rect(screen, (100, 100, 100), (100 + gridLoc[0] * 75, gridLoc[1] * 75, 75, 75), 1)
-        wallGrid[gridLocPrev[0]][gridLocPrev[1]] = 1
 
         # reset the delay, checks once per 0.5s
         enemyReEvaluate[0] = enemyReEvaluate[1]
         # loop through all of the enemies and get da paths
         for i in range(numEnemy):
-            enemyPath[i] = ai.search(wallGrid, enemyX[i], enemyY[i])
+            enemyGridLoc[i] = grid_location(disLength - 10, 37)
+            enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()

@@ -1,13 +1,14 @@
 save
 money 322
 
+# MAIN PLAYER WEAPONS
 
 weapon
 Pistol
 damage 3
 fire_rate 3.0
 proj_speed 22
-ammo 4
+ammo 8
 reload 1.5
 inaccuracy 2
 recoil 1.8
@@ -26,7 +27,7 @@ Sub Machine Gun
 damage 2
 fire_rate 10.0
 proj_speed 22
-ammo 20
+ammo 30
 reload 3.5
 inaccuracy 3
 recoil 0.7
@@ -40,13 +41,34 @@ cost 100
 owned 0
 end
 
+# EXPERIMENTAL / WIP WEAPONS
+
+weapon
+Assault Rifle
+damage 4
+fire_rate 7.0
+proj_speed 30
+ammo 25
+reload 4.5
+inaccuracy 1.2
+recoil 1.4
+speed 0.8
+image smg
+bullet basic
+effect exp_small
+sound smg
+sound_death smg impact
+cost 200
+owned 0
+end
+
 weapon
 Sniper Rifle
 damage 10
-fire_rate 0.75
+fire_rate 1.0
 proj_speed 35.0
-ammo 2
-reload 4.0
+ammo 1
+reload 1.5
 inaccuracy 0
 recoil 5
 special "pierce"
@@ -56,7 +78,7 @@ bullet sniper bullet
 effect exp_small
 sound none
 sound_death none
-cost 100
+cost 500
 owned 0
 end
 
@@ -75,7 +97,7 @@ bullet poop
 effect exp_HUGE
 sound none
 sound_death none
-cost 100
+cost 1000
 owned 0
 end
 

@@ -149,7 +149,7 @@ class Grid(object):
         data = ''
         if border:
             data = '+{}+'.format('-'*len(self.nodes[0]))
-        for y in range(len(self.nodes)):
+        for y in range(len(self.nodes) - 1, -1, -1):
             line = ''
             for x in range(len(self.nodes[y])):
                 node = self.nodes[y][x]

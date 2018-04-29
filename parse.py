@@ -6,7 +6,7 @@ def parse_file(open_file):
     cur_wpn = 0
     cur_type = ""
 
-    # initial parse for the save
+# initial parse for the save
     if cur_line == "save\n":
         # monies
         cur_line = open_file.readline().split()

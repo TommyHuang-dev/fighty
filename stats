@@ -19,6 +19,7 @@ speed 1.1
 effect exp_small
 sound pistol
 sound_death pistol impact
+sound_hit pistol impact
 cost 0
 owned 1
 end
@@ -27,7 +28,7 @@ weapon
 Pistol
 damage 3
 fire_rate 3.5
-proj_speed 22
+proj_speed 20
 ammo 8
 reload 1.5
 inaccuracy 2
@@ -38,6 +39,7 @@ speed 1.0
 effect exp_small
 sound pistol
 sound_death pistol impact
+sound_hit pistol impact
 cost 0
 owned 1
 end
@@ -46,7 +48,7 @@ weapon
 Sub Machine Gun
 damage 2
 fire_rate 10.0
-proj_speed 22
+proj_speed 20
 ammo 30
 reload 3.0
 inaccuracy 3
@@ -57,6 +59,7 @@ bullet basic
 effect exp_small
 sound smg
 sound_death smg impact
+sound_hit smg impact
 cost 100
 owned 0
 end
@@ -67,7 +70,7 @@ weapon
 Assault Rifle
 damage 4
 fire_rate 7.0
-proj_speed 30
+proj_speed 25
 ammo 25
 reload 4.5
 inaccuracy 1.2
@@ -78,6 +81,7 @@ bullet basic
 effect exp_small
 sound smg
 sound_death smg impact
+sound_hit smg impact
 cost 200
 owned 0
 end
@@ -86,7 +90,7 @@ weapon
 Sniper Rifle
 damage 10
 fire_rate 1.0
-proj_speed 55.0
+proj_speed 45.0
 ammo 1
 reload 1.5
 inaccuracy 0
@@ -106,7 +110,7 @@ weapon
 Rocket Launcher
 damage 100000
 fire_rate 0.5
-proj_speed 12.0
+proj_speed 10.0
 ammo 1
 reload 2.0
 inaccuracy 2.25
@@ -128,16 +132,16 @@ end
 weapon
 Enemy Pistol
 damage 2
-fire_rate 1.5
-proj_speed 16
-ammo 4
-reload 2.75
-inaccuracy 2.75
+fire_rate 1.0
+proj_speed 15
+ammo -1
+reload 1
+inaccuracy 3.5
 recoil 0
 image pistol
 bullet basic_enemy
 effect exp_small
 cost 0
-owned 1
+owned 0
 end
 

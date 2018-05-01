@@ -72,6 +72,10 @@ def parse_file(open_file):
                 cur_line = ' '.join(map(str, cur_line))  # joins all words together
                 wExpSound.append("")
                 wExpSound[cur_wpn] = "sounds/" + cur_line[12:] + ".wav"
+            elif cur_line[0] == "sound_hit":
+                cur_line = ' '.join(map(str, cur_line))  # joins all words together
+                wHitSound.append("")
+                wHitSound[cur_wpn] = "sounds/" + cur_line[10:] + ".wav"
             elif cur_line[0] == "cost":
                 wCost.append("")
                 wCost[cur_wpn] = (int(cur_line[1]))
@@ -165,6 +169,7 @@ wEff = []
 wEff2 = []
 wSound = []
 wExpSound = []
+wHitSound = []
 wCost = []
 wOwned = []
 

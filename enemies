@@ -5,20 +5,8 @@ basic
 health 8
 weapon Enemy Pistol
 img enemy_basic
-hitbox 44
+hitbox 36
 rarity 1
-movespeed 3.0
-boss 0
-end
-
-
-enemy
-basic boss
-health 20
-weapon Enemy Pistol
-img enemy_basic
-hitbox 30
-rarity 5
 movespeed 2.5
-boss 1
+boss 0
 end

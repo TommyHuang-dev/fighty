@@ -31,13 +31,13 @@ def grid_location(x, y):
     # x
     loc[0] = int((x - 100)//75)
     loc[1] = int(y//75)
-    if x > disLength:
+    if loc[0] > 11:
         loc[0] = 11
-    elif x < 0:
-        loc[1] = 0
-    if y > disHeight:
-        loc[0] = 7
-    elif y < 0:
+    elif loc[0] < 0:
+        loc[0] = 0
+    if loc[1] > 7:
+        loc[1] = 7
+    elif loc[1] < 0:
         loc[1] = 0
 
     return loc
@@ -130,16 +130,16 @@ def move_player(buttons, pSpd):
 
     # redoing dis shit, num[0] = x movement, num[1] = y movement
     if buttons[pygame.K_w]:
-        if not wall_collision(posX, posY - pSpd, 20):
+        if not wall_collision(posX, posY - (pSpd / 2), 18):
             num[0] = - pSpd
     elif buttons[pygame.K_s]:
-        if not wall_collision(posX, posY + pSpd, 20):
+        if not wall_collision(posX, posY + (pSpd / 2), 18):
             num[0] = pSpd
     if buttons[pygame.K_d]:
-        if not wall_collision(posX + pSpd, posY, 20):
+        if not wall_collision(posX + (pSpd / 2), posY, 18):
             num[1] = pSpd
     elif buttons[pygame.K_a]:
-        if not wall_collision(posX - pSpd, posY, 20):
+        if not wall_collision(posX - (pSpd / 2), posY, 18):
             num[1] = - pSpd
 
     # move da player
@@ -286,7 +286,7 @@ timeSlow = [1.0, 1.0]  # self slow, enemy slow
 playerImg = pygame.image.load("player.png").convert_alpha()
 posX = 150.0  # start in the top left corner
 posY = 50.0
-baseSpeed = 5.0
+baseSpeed = 4.5
 health = [10, 10]  # min/max hp
 mana = [100, 100]  # min/max mana
 manaChargeDelay = [0, 30]  # number of ticks of delay before mana starts to recharge
@@ -318,6 +318,7 @@ bulTarX = [-50.0] * 12
 bulTarY = [-50.0] * 12
 bulAng = [0.0] * 12
 bulExpSound = [parse.wExpSound[curWpn]] * 12
+bulHitSound = [parse.wHitSound[curWpn]] * 12
 curBul = 0
 
 outOfAmmoSound = pygame.mixer.Sound('sounds/noammo.wav')
@@ -358,7 +359,6 @@ enemyTar = [[0, 0]] * numEnemy  # an array of tile positions, where the enemy wa
 enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to (e.g. [-1,0] is West)
 enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
-enemyActive[0] = True
 
 enemySpawn = 0
 # load sounds, channel 0 is reserved for music, all others used for sound effects
@@ -391,6 +391,7 @@ for i in range(1, -1, -1):
         parse.wEff2 = [parse.wEff2[ArrayLoc]] + parse.wEff2
         parse.wSound = [parse.wSound[ArrayLoc]] + parse.wSound
         parse.wExpSound = [parse.wExpSound[ArrayLoc]] + parse.wExpSound
+        parse.bulHitSound = [parse.wHitSound[curWpn]] + parse.wHitSound
         parse.wCost = [parse.wCost[ArrayLoc]] + parse.wCost
         parse.wOwned = [parse.wOwned[ArrayLoc]] + parse.wOwned
     else:
@@ -407,7 +408,7 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 while True:
     screen.fill(backCol)
 
-    enemySpawn -= 1
+    enemySpawn -= 1 * timeSlow[1]
     # tick down timers, recharge mana
     enemyReEvaluate[0] += -1
     for i in range(2):
@@ -434,25 +435,13 @@ while True:
         timeSlow[1] = 1.0
 
     # ------------ ENEMY STUFF ------------ #
-    # Every 0.5sec, evaluate a path for every enemy to the player
-    # path finding for the enemies, using some shady algorithm from online
-    if enemyReEvaluate[0] <= 0:
-        gridLoc = grid_location(posX, posY)
-
-        # reset the delay, checks once per 0.5s
-        enemyReEvaluate[0] = enemyReEvaluate[1]
-        # loop through all of the enemies and get da paths
-        for i in range(numEnemy):
-            if enemyActive[i]:
-                enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
-                enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
 
     # enemy spawning
     # remember to set max HP here!
     if enemySpawn <= 0:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(20, 40) + (numEnemyAlive * random.randint(10, 20))
+        enemySpawn = random.randint(100, 150) + (numEnemyAlive * random.randint(15, 25))
         if numEnemyAlive < numEnemy:
             # gets the next dead enemy in list
             next = enemyActive.index(False)
@@ -475,6 +464,20 @@ while True:
 
             enemyActive[next] = True
 
+    # Every 0.5sec, evaluate a path for every enemy to the player
+    # path finding for the enemies, using some shady algorithm from online
+    if enemyReEvaluate[0] <= 0:
+        gridLoc = grid_location(posX, posY)
+
+        # reset the delay, checks once per 0.5s
+        enemyReEvaluate[0] = enemyReEvaluate[1]
+        # loop through all of the enemies and get da paths
+        for i in range(numEnemy):
+            if enemyActive[i]:
+                enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
+                #print("loc:", enemyGridLoc)
+                enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
+                #print("path:", enemyPath)
 
     # enemy movement
     for i in range(numEnemy):
@@ -506,7 +509,7 @@ while True:
 
     # move player and display player
     move_player(pressed, speed * timeSlow[0])
-    screen.blit(playerImg, (posX - 25, posY - 25))
+    screen.blit(playerImg, (posX - 20, posY - 20))
 
     # switch weapon (knife, wpn 0, wpn 1)
     if pressed[pygame.K_1]:  # knife later
@@ -553,6 +556,7 @@ while True:
         # sounds
         atkSound.play()
         bulExpSound[curBul] = pygame.mixer.Sound(parse.wExpSound[curWpn])
+        bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
 
         # set cooldown and automatic reload
         fireCD = 60 / parse.wRate[curWpn]
@@ -574,8 +578,8 @@ while True:
             gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 10 + 1  # number of times to check for collision
             for j in range(gap):
                 # check if the bullet hits a wall
-                enemyCheck = enemy_collision(bulX[i], bulY[i], enemyX, enemyY, enemyActive, enemyBox, 3)
-                if wall_collision(bulX[i], bulY[i], 3) or bulX[i] + 10 > disLength or bulX[i] < 110 or bulY[i] + 10 > disHeight or bulY[i] < 10:
+                enemyCheck = enemy_collision(bulX[i], bulY[i], enemyX, enemyY, enemyActive, enemyBox, 2)
+                if wall_collision(bulX[i], bulY[i], 2) or bulX[i] + 10 > disLength or bulX[i] < 110 or bulY[i] + 10 > disHeight or bulY[i] < 10:
                     # draw the bullet for one frame before death
                     screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
                     active[i] = -1
@@ -596,7 +600,7 @@ while True:
                     active[i] = -1
                     # change picture to explosion!!!
                     bulImg[i] = effImg[i]
-                    bulExpSound[i].play()
+                    bulHitSound[i].play()
                     break
                 else:
                     bulX[i] += bulTarX[i] * timeSlow[0] / gap

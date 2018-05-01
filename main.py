@@ -22,9 +22,9 @@ def slow_music():
     pass
 
 # finds grid location from coordinates
-# GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
+# GRID SPECIFICATIONS: center of walls start 100 + 37 from the left (100 is taken up by the ui)
 #                      and 0 from the top. It is 12x8, first one and last two never have walls
-#                      Ends at last 50 units from the right. Each wall is 75x75, and is in total a
+#                      Each wall is 75x75, and is in total a
 #                      900x600 grid
 def grid_location(x, y):
     loc = [0, 0]
@@ -166,10 +166,19 @@ def wall_collision(x, y, hitbox):
     global wallRandom, wallRandomY
     for i in range(len(wallRandom)):
         if wallRandom[i] + hitbox + 37 > x > wallRandom[i] - hitbox - 37 and \
-                            wallRandomY[i] + hitbox + 37 > y > wallRandomY[i] - hitbox - 37:
+                        wallRandomY[i] + hitbox + 37 > y > wallRandomY[i] - hitbox - 37:
             return True
     return False
 
+# check if a fired bullet hits an enemy. x and y are the bullet coords, enemy_x and enemy_y are an array of enemy locations
+# returns -1 if no hit, otherwise returns the list location of the hit enemy
+def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
+    global numEnemy
+    for i in range(numEnemy):
+        if enemy_x[i] - box_e[i] / 2 - box_bul < x < enemy_x[i] + box_e[i] / 2 + box_bul and \
+                        enemy_y[i] - box_e[i] / 2 - box_bul < y < enemy_y[i] + box_e[i] / 2 + box_bul and enemy_active:
+            return i
+    return -1
 
 def spawn_enemy():
     pass
@@ -338,10 +347,11 @@ for i in range(len(parse.eImg)):
 enemyReEvaluate = [0, 10]  # every 10 ticks re evaluate the path chosen
 
 enemyHP = [parse.eHP[0]] * numEnemy
+enemyMaxHP = enemyHP * numEnemy  # used for the HP bar
 enemyImg = [parse.eImg[0]] * numEnemy
 enemyBox = [parse.eBox[0]] * numEnemy
 enemySpeed = [parse.eSpeed[0]] * numEnemy
-enemyX = [disLength - 10] * numEnemy
+enemyX = [disLength + 40] * numEnemy
 enemyY = [75 + 37] * numEnemy
 enemyGridLoc = grid_location(75 + 37, disLength - 10) * numEnemy
 enemyTar = [[0, 0]] * numEnemy  # an array of tile positions, where the enemy wants to move
@@ -350,6 +360,7 @@ enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 enemyActive[0] = True
 
+enemySpawn = 0
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
 pygame.mixer.set_num_channels(10)
@@ -396,6 +407,7 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 while True:
     screen.fill(backCol)
 
+    enemySpawn -= 1
     # tick down timers, recharge mana
     enemyReEvaluate[0] += -1
     for i in range(2):
@@ -435,6 +447,35 @@ while True:
                 enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
                 enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
 
+    # enemy spawning
+    # remember to set max HP here!
+    if enemySpawn <= 0:
+        # lower spawn rates if lots of enemies already there
+        numEnemyAlive = enemyActive.count(True)
+        enemySpawn = random.randint(20, 40) + (numEnemyAlive * random.randint(10, 20))
+        if numEnemyAlive < numEnemy:
+            # gets the next dead enemy in list
+            next = enemyActive.index(False)
+
+            # reset stats
+            enemyHP[next] = parse.eHP[0]
+            enemyMaxHP[next] = 8 # used for the HP bar
+            enemyImg[next] = parse.eImg[0]
+            enemyBox[next] = parse.eBox[0]
+            enemySpeed[next] = parse.eSpeed[0]
+
+            # spawn enemy, randomize location
+            spawnLoc = random.randint(0, 1)
+            if spawnLoc == 0:
+                enemyX[next] = disLength + 40
+                enemyY[next] = 75 + 37
+            elif spawnLoc == 1:
+                enemyX[next] = disLength + 40
+                enemyY[next] = disHeight - 75 - 37
+
+            enemyActive[next] = True
+
+
     # enemy movement
     for i in range(numEnemy):
         if enemyActive[i]:
@@ -442,6 +483,7 @@ while True:
             move_next_path(i, enemyGridLoc[i], enemyPath[i], enemySpeed[i])
             # draw!
             screen.blit(enemyImg[i], (enemyX[i] - enemyBox[i] / 2, enemyY[i] - enemyBox[i] / 2))
+            pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()
@@ -528,10 +570,27 @@ while True:
     # displaying and resetting bullets
     for i in range(12):
         if active[i] > 0:
-            # check if the bullet hits a wall, else display it
+            # check if the bullet hits a wall or enemy, else display it
             gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 10 + 1  # number of times to check for collision
             for j in range(gap):
+                # check if the bullet hits a wall
+                enemyCheck = enemy_collision(bulX[i], bulY[i], enemyX, enemyY, enemyActive, enemyBox, 3)
                 if wall_collision(bulX[i], bulY[i], 3) or bulX[i] + 10 > disLength or bulX[i] < 110 or bulY[i] + 10 > disHeight or bulY[i] < 10:
+                    # draw the bullet for one frame before death
+                    screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
+                    active[i] = -1
+                    # change picture to explosion!!!
+                    bulImg[i] = effImg[i]
+                    bulExpSound[i].play()
+                    break
+                # check if the bullet hits an enemy
+                elif enemyCheck > -1:
+                    # effects on enemy (health loss, death check)
+                    enemyHP[enemyCheck] -= bulDmg[i]
+                    if enemyHP[enemyCheck] <= 0:
+                        enemyActive[enemyCheck] = False
+                        enemyX[enemyCheck] = disLength + 25
+                        enemyY[enemyCheck] = 75 + 37
                     # draw the bullet for one frame before death
                     screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
                     active[i] = -1
@@ -562,6 +621,13 @@ while True:
     # ------------ UI ELEMENTS ------------ #
     # draw walls and stuff
     draw_map(wallCol, wallRandom, wallRandomY)
+
+    # draw enemy HP bars here so that they go above the stuffs
+    for i in range(numEnemy):
+        if enemyActive[i]:
+            # draw HP bars (red inside then black outline)
+            pygame.draw.rect(screen, UIHp, (enemyX[i] - 25, enemyY[i] - 40, enemyHP[i] / enemyMaxHP[i] * 50, 10))
+            pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
 
     # draw crosshair
     dist = math.sqrt((mousePos[0] - posX) ** 2 + (mousePos[1] - posY) ** 2)

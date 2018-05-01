@@ -4,14 +4,34 @@ money 322
 # MAIN PLAYER WEAPONS
 
 weapon
+Knife
+damage 1
+fire_rate 3.0
+proj_speed 5
+ammo -1
+reload 0
+inaccuracy 0
+recoil 0
+image knife
+bullet basic
+special "melee"
+speed 1.1
+effect exp_small
+sound pistol
+sound_death pistol impact
+cost 0
+owned 1
+end
+
+weapon
 Pistol
 damage 3
-fire_rate 3.0
+fire_rate 3.5
 proj_speed 22
 ammo 8
 reload 1.5
 inaccuracy 2
-recoil 1.8
+recoil 1.7
 image pistol
 bullet basic
 speed 1.0
@@ -28,7 +48,7 @@ damage 2
 fire_rate 10.0
 proj_speed 22
 ammo 30
-reload 3.5
+reload 3.0
 inaccuracy 3
 recoil 0.7
 speed 0.95
@@ -66,7 +86,7 @@ weapon
 Sniper Rifle
 damage 10
 fire_rate 1.0
-proj_speed 35.0
+proj_speed 55.0
 ammo 1
 reload 1.5
 inaccuracy 0

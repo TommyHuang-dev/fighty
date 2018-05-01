@@ -5,7 +5,7 @@ basic
 health 8
 weapon Enemy Pistol
 img enemy_basic
-hitbox 46
+hitbox 44
 rarity 1
 movespeed 3.0
 boss 0

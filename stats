@@ -4,29 +4,9 @@ money 322
 # MAIN PLAYER WEAPONS
 
 weapon
-Knife
-damage 1
-fire_rate 3.0
-proj_speed 5
-ammo -1
-reload 0
-inaccuracy 0
-recoil 0
-image knife
-bullet basic
-special "melee"
-speed 1.1
-effect exp_small
-sound pistol
-sound_death pistol impact
-sound_hit pistol impact
-cost 0
-owned 1
-end
-
-weapon
 Pistol
 damage 3
+volley 1
 fire_rate 3.5
 proj_speed 20
 ammo 8
@@ -47,13 +27,14 @@ end
 weapon
 Sub Machine Gun
 damage 2
+volley 1
 fire_rate 10.0
 proj_speed 20
 ammo 30
 reload 3.0
 inaccuracy 3
 recoil 0.7
-speed 0.95
+speed 0.9
 image smg
 bullet basic
 effect exp_small
@@ -64,84 +45,117 @@ cost 100
 owned 0
 end
 
+weapon
+Shotgun
+damage 2
+volley 5
+fire_rate 1.0
+proj_speed 15
+ammo 5
+reload 2.5
+inaccuracy 5.0
+recoil 4.0
+speed 0.9
+image shotgun
+bullet shotgun bullet
+effect exp_pellet
+sound shotgun
+sound_death shotgun impact
+sound_hit shotgun impact
+cost 200
+owned 0
+end
+
+
 # EXPERIMENTAL / WIP WEAPONS
 
 weapon
-Assault Rifle
-damage 4
-fire_rate 7.0
-proj_speed 25
-ammo 25
-reload 4.5
-inaccuracy 1.2
-recoil 1.4
-speed 0.8
+Sniper
+damage 15
+volley 1
+fire_rate 1.0
+proj_speed 35
+ammo 1
+reload 2.0
+inaccuracy 0.2
+recoil 4.5
+image pistol
+bullet basic
+speed 0.6
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol impact
+cost 0
+owned 1
+end
+
+
+weapon
+Knife
+damage 1
+volley 1
+fire_rate 3.0
+proj_speed 5
+ammo -1
+reload 0
+inaccuracy 0
+recoil 0
+image knife
+bullet basic
+special "melee"
+speed 1.1
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol impact
+cost 0
+owned 1
+end
+
+
+# ENEMY WEAPONS BEGIN HERE
+
+weapon
+Enemy Pistol
+damage 2
+volley 1
+fire_rate 1.0
+proj_speed 10
+ammo -1
+reload 1
+inaccuracy 3.0
+recoil 0
+image pistol
+bullet basic
+speed 1.0
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol impact
+cost 0
+owned 1
+end
+
+
+weapon
+Enemy SMG
+damage 1
+volley 1
+fire_rate 3.0
+proj_speed 10
+ammo -1
+reload 1
+inaccuracy 4.5
+recoil 0
+speed 1.0
 image smg
 bullet basic
 effect exp_small
 sound smg
 sound_death smg impact
 sound_hit smg impact
-cost 200
-owned 0
-end
-
-weapon
-Sniper Rifle
-damage 10
-fire_rate 1.0
-proj_speed 45.0
-ammo 1
-reload 1.5
-inaccuracy 0
-recoil 5
-special "pierce"
-image sniper
-speed 0.7
-bullet sniper bullet
-effect exp_small
-sound none
-sound_death none
-cost 500
-owned 0
-end
-
-weapon
-Rocket Launcher
-damage 100000
-fire_rate 0.5
-proj_speed 10.0
-ammo 1
-reload 2.0
-inaccuracy 2.25
-recoil 5
-image sniper
-speed 0.5
-bullet poop
-effect exp_HUGE
-sound none
-sound_death none
-cost 1000
-owned 0
-end
-
-
-# ENEMY WEAPONS BEGIN HERE
-
-
-weapon
-Enemy Pistol
-damage 2
-fire_rate 1.0
-proj_speed 15
-ammo -1
-reload 1
-inaccuracy 3.5
-recoil 0
-image pistol
-bullet basic_enemy
-effect exp_small
-cost 0
+cost 100
 owned 0
 end
 

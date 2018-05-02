@@ -31,6 +31,9 @@ def parse_file(open_file):
             elif cur_line[0] == "damage":
                 wDmg.append("")
                 wDmg[cur_wpn] = (int(cur_line[1]))
+            elif cur_line[0] == "volley":
+                wVol.append("")
+                wVol[cur_wpn] = (int(cur_line[1]))
             elif cur_line[0] == "fire_rate":
                 wRate.append("")
                 wRate[cur_wpn] = (float(cur_line[1]))
@@ -156,6 +159,7 @@ end
 
 wName = []
 wDmg = []
+wVol = []
 wRate = []
 wProj = []
 wAmmo = []
@@ -192,3 +196,6 @@ enemyFile = open("enemies", "r")
 parse_file(saveFile)
 parse_enemy(enemyFile)
 
+
+# default stats
+numWeapons = len(wName)

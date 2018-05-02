@@ -6,8 +6,16 @@ import random
 import time
 from pathfinder import ai
 
+# TODO: Add powerups (hp, mana, speed boost, maybe one for inf. ammo?)
+# TODO: Add enemy shooting
+# TODO: Add functionality for special weapon effects (explosion, pierce)
+# TODO: Add levels and stronger enemies
+# TODO: Add Monies and shop
+
+
 class Enemy:
     def __init__(self):
+        # 3 lazy 5 this
         pass
 
 
@@ -43,13 +51,13 @@ def grid_location(x, y):
     return loc
 
 # move to the next path tile thing
-def move_next_path(curEnemy, egridloc, epath, espeed,):
+def move_next_path(curEnemy, egridloc, epath, espeed, xpos):
     if len(epath) > 1:
         # check all 4 directions
         # epath is (y, x) but egridloc is (x, y) cuz reasons
-        if egridloc[0] < epath[1][1]:  # move left
+        if egridloc[0] < epath[1][1]:  # move right
             enemyX[curEnemy] += espeed * timeSlow[1]
-        elif egridloc[0] > epath[1][1]:  # move right
+        elif egridloc[0] > epath[1][1] or xpos > disLength - 30:  # move left
             enemyX[curEnemy] -= espeed * timeSlow[1]
         elif egridloc[1] > epath[1][0]:  # move up
             enemyY[curEnemy] -= espeed * timeSlow[1]
@@ -130,16 +138,16 @@ def move_player(buttons, pSpd):
 
     # redoing dis shit, num[0] = x movement, num[1] = y movement
     if buttons[pygame.K_w]:
-        if not wall_collision(posX, posY - (pSpd / 2), 18):
+        if not wall_collision(posX, posY - pSpd, 16):
             num[0] = - pSpd
     elif buttons[pygame.K_s]:
-        if not wall_collision(posX, posY + (pSpd / 2), 18):
+        if not wall_collision(posX, posY + pSpd, 16):
             num[0] = pSpd
     if buttons[pygame.K_d]:
-        if not wall_collision(posX + (pSpd / 2), posY, 18):
+        if not wall_collision(posX + pSpd, posY, 16):
             num[1] = pSpd
     elif buttons[pygame.K_a]:
-        if not wall_collision(posX - (pSpd / 2), posY, 18):
+        if not wall_collision(posX - pSpd, posY, 16):
             num[1] = - pSpd
 
     # move da player
@@ -180,9 +188,6 @@ def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
             return i
     return -1
 
-def spawn_enemy():
-    pass
-
 def draw_map(wall_col, rand, randY):
     pygame.draw.rect(screen, wall_col, (102, 2, 896, 596), 5)
     screen.fill((45, 45, 45), rect = (disLength - 7, 75, 7, 75))
@@ -193,28 +198,6 @@ def draw_map(wall_col, rand, randY):
 
 def main_menu():
     pass
-
-
-'''
-|= = = = = = = = = = = = = = = = MAIN CODE STARTS NOW = = = = = = = = = = = = = = = = =|
-
-TODO LIST:
-    - add enemies
-        - pathfinding and map generation in 75x75 grid
-        pathfinding ideas:
-        check which quadrant the player is in
-        If low hp or need backup, find cover and run away, otherwise, advance.
-        Add randomness so that enemies split up and sometimes surround the player.d
-    - add barriers DONE (mostly)
-    - add better visuals on hit for bullets (maybe 2 or 3 frames of effects instead of 1 pic)
-    - add knife/ LIGHT SABRE (deflects bullets!)
-    - multiple levels?!
-    - sound effects
-
-BUGS: ¯\_(ツ)_/¯
-    - no bugs obviously all features
-
-'''
 
 # initiate pygame and cursors`
 pygame.mixer.pre_init(22050, -16, 6, 512)
@@ -264,7 +247,7 @@ for i in range(12):  # x axis
     wallCountC = 0
     for k in range(8):  # y axis
         # better walls[tm]
-        if random.randint(0, 60) + ran >= 56 and 2 <= i <= 10 and wallCountC < 3 and wallCount < 9:
+        if random.randint(0, 60) + ran >= 56 and 1 <= i <= 10 and wallCountC < 3 and wallCount < 9:
             wallGrid[i].append(1)
             wallCountC += 1
             wallCount += 1
@@ -287,8 +270,8 @@ playerImg = pygame.image.load("player.png").convert_alpha()
 posX = 150.0  # start in the top left corner
 posY = 50.0
 baseSpeed = 4.5
-health = [10, 10]  # min/max hp
-mana = [100, 100]  # min/max mana
+health = [10, 10]  # cur/max hp
+mana = [100, 100]  # cur/max mana
 manaChargeDelay = [0, 30]  # number of ticks of delay before mana starts to recharge
 manaUseSpeed = [20, 10]  # usage rate / recharge rate per second
 fireCD = 0.0  # used when shooting
@@ -347,6 +330,7 @@ for i in range(len(parse.eImg)):
 
 enemyReEvaluate = [0, 10]  # every 10 ticks re evaluate the path chosen
 
+# enemy stats
 enemyHP = [parse.eHP[0]] * numEnemy
 enemyMaxHP = enemyHP * numEnemy  # used for the HP bar
 enemyImg = [parse.eImg[0]] * numEnemy
@@ -360,24 +344,42 @@ enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to 
 enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 
+# stats for the enemy weapons
+enemyBulImg = [parse.wBul] * 12  # should probably add different pictures
+enemyEffImg = [expSmall] * 12
+enemyEffImg2 = [""] * 12
+enemyBulX = [-50.0] * 12
+enemyBulY = [-50.0] * 12
+enemyBulActive = [0] * 12
+enemyBulDmg = [0] * 12
+enemyBulProj = [0.0] * 12
+enemyBulTarX = [-50.0] * 12
+enemyBulTarY = [-50.0] * 12
+enemyBulAng = [0.0] * 12
+enemyBulExpSound = [parse.wExpSound[curWpn]] * 12
+enemyBulHitSound = [parse.wHitSound[curWpn]] * 12
+enemyCurBul = 0
+
+
 enemySpawn = 0
 # load sounds, channel 0 is reserved for music, all others used for sound effects
-ingameMusic = pygame.mixer.Sound('sounds/background music.wav')
+ingameMusic = pygame.mixer.music.load('sounds/background music.wav')
 pygame.mixer.set_num_channels(10)
-channel0 = pygame.mixer.Channel(0)
-channel0.play(ingameMusic, loops=-1)
+pygame.mixer.music.play(-1)
 # slow motion music
 
 # ========= GAME LOGIC ========= #
-
+# List of all weapons (not including WIP):
+# Shotgun, Sub Machine Gun, Pistol
 # get the weapons that the player has equipped
-EqWpnName = ["Sub Machine Gun", "Pistol"]  # the 2 weapons used
+EqWpnName = ["Shotgun", "Pistol"]  # the 2 weapons used
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:
         ArrayLoc = parse.wName.index(EqWpnName[i])
         # theres DEFINITELY a better way of doing dis
         parse.wName = [parse.wName[ArrayLoc]] + parse.wName
         parse.wDmg = [parse.wDmg[ArrayLoc]] + parse.wDmg
+        parse.wVol = [parse.wVol[ArrayLoc]] + parse.wVol
         parse.wRate = [parse.wRate[ArrayLoc]] + parse.wRate
         parse.wProj = [parse.wProj[ArrayLoc]] + parse.wProj
         parse.wAmmo = [parse.wAmmo[ArrayLoc]] + parse.wAmmo
@@ -391,7 +393,7 @@ for i in range(1, -1, -1):
         parse.wEff2 = [parse.wEff2[ArrayLoc]] + parse.wEff2
         parse.wSound = [parse.wSound[ArrayLoc]] + parse.wSound
         parse.wExpSound = [parse.wExpSound[ArrayLoc]] + parse.wExpSound
-        parse.bulHitSound = [parse.wHitSound[curWpn]] + parse.wHitSound
+        parse.wHitSound = [parse.wHitSound[ArrayLoc]] + parse.wHitSound
         parse.wCost = [parse.wCost[ArrayLoc]] + parse.wCost
         parse.wOwned = [parse.wOwned[ArrayLoc]] + parse.wOwned
     else:
@@ -430,9 +432,11 @@ while True:
         manaChargeDelay[0] += -1
         if manaChargeDelay[0] <= 0 and mana[0] < mana[1]:
             mana[0] += manaUseSpeed[1] / 60
+    # stop powerup if run out of mana
     if mana[0] <= 0:
         timeSlow[0] = 1.0
         timeSlow[1] = 1.0
+        # pygame.mixer.music.set_volume(1.0)
 
     # ------------ ENEMY STUFF ------------ #
 
@@ -441,14 +445,14 @@ while True:
     if enemySpawn <= 0:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(100, 150) + (numEnemyAlive * random.randint(15, 25))
+        enemySpawn = random.randint(120, 180) + (numEnemyAlive * random.randint(10, 20))
         if numEnemyAlive < numEnemy:
             # gets the next dead enemy in list
             next = enemyActive.index(False)
 
             # reset stats
             enemyHP[next] = parse.eHP[0]
-            enemyMaxHP[next] = 8 # used for the HP bar
+            enemyMaxHP[next] = enemyHP[next] # used for the HP bar
             enemyImg[next] = parse.eImg[0]
             enemyBox[next] = parse.eBox[0]
             enemySpeed[next] = parse.eSpeed[0]
@@ -483,7 +487,7 @@ while True:
     for i in range(numEnemy):
         if enemyActive[i]:
             # do everything
-            move_next_path(i, enemyGridLoc[i], enemyPath[i], enemySpeed[i])
+            move_next_path(i, enemyGridLoc[i], enemyPath[i], enemySpeed[i], enemyX[i])
             # draw!
             screen.blit(enemyImg[i], (enemyX[i] - enemyBox[i] / 2, enemyY[i] - enemyBox[i] / 2))
             pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
@@ -503,9 +507,11 @@ while True:
         timeBuffer[0] = timeBuffer[1]
         if timeSlow[0] != 1 or timeSlow[1] != 1:
             timeSlow = [1.0, 1.0]
-        else:
+            # pygame.mixer.music.set_volume(1.0)
+        elif mana[0] > 0:
             timeSlow = [1.0, 0.3]  # self slow, enemy slow
             manaChargeDelay[0] = 30
+            # pygame.mixer.music.set_volume(0.5)
 
     # move player and display player
     move_player(pressed, speed * timeSlow[0])
@@ -531,32 +537,33 @@ while True:
     mouse = pygame.mouse.get_pressed()
 
     # manual reload
-    if pressed[pygame.K_r] and wpnAmmo[curWpn] < parse.wAmmo[curWpn]:
+    if pressed[pygame.K_r] and wpnAmmo[curWpn] < parse.wAmmo[curWpn] and relCD[curWpn] <= 0:
         relCD[curWpn] = parse.wRel[curWpn] * 60
     # shoot
     if mouse[0] == 1 and fireCD <= 0 and relCD[curWpn] <= 0:
-        curBul += 1
-        if curBul >= 12:
-            curBul = 0
-        # set some bullet variables
-        bulX[curBul] = posX
-        bulY[curBul] = posY
-        active[curBul] = 1
-        bulTarX[curBul] = mousePos[0]
-        bulTarY[curBul] = mousePos[1]
-        bulDmg[curBul] = parse.wDmg[curWpn]
-        bulProj[curBul] = parse.wProj[curWpn]
-        # TRIG YAY
-        calc_bullet(bulX[curBul], bulY[curBul], wpnInAcc[curWpn])
-        bulImg[curBul] = rot_center(parse.wBul[curWpn], math.degrees(bulAng[curBul]))
-        effImg[curBul] = parse.wEff[curWpn]
-        effImg2[curBul] = parse.wEff2[curWpn]
+        for i in range(parse.wVol[curWpn]):
+            curBul += 1
+            if curBul >= 12:
+                curBul = 0
+            # set some bullet variables
+            bulX[curBul] = posX
+            bulY[curBul] = posY
+            active[curBul] = 1
+            bulTarX[curBul] = mousePos[0]
+            bulTarY[curBul] = mousePos[1]
+            bulDmg[curBul] = parse.wDmg[curWpn]
+            bulProj[curBul] = parse.wProj[curWpn]
+            # TRIG YAY
+            calc_bullet(bulX[curBul], bulY[curBul], wpnInAcc[curWpn])
+            bulImg[curBul] = rot_center(parse.wBul[curWpn], math.degrees(bulAng[curBul]))
+            effImg[curBul] = parse.wEff[curWpn]
+            effImg2[curBul] = parse.wEff2[curWpn]
+            bulExpSound[curBul] = pygame.mixer.Sound(parse.wExpSound[curWpn])
+            bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
         # recoil!
         wpnInAcc[curWpn] += parse.wCoil[curWpn]
         # sounds
         atkSound.play()
-        bulExpSound[curBul] = pygame.mixer.Sound(parse.wExpSound[curWpn])
-        bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
 
         # set cooldown and automatic reload
         fireCD = 60 / parse.wRate[curWpn]
@@ -575,7 +582,7 @@ while True:
     for i in range(12):
         if active[i] > 0:
             # check if the bullet hits a wall or enemy, else display it
-            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 10 + 1  # number of times to check for collision
+            gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 8 + 1  # number of times to check for collision
             for j in range(gap):
                 # check if the bullet hits a wall
                 enemyCheck = enemy_collision(bulX[i], bulY[i], enemyX, enemyY, enemyActive, enemyBox, 2)

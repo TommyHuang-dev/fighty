@@ -289,19 +289,19 @@ gridLoc = [0, 0]
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
 
 # player bullet variables
-bulImg = [parse.wBul] * 12  # should probably add different pictures
-effImg = [expSmall] * 12
-effImg2 = [""] * 12
-bulX = [-50.0] * 12
-bulY = [-50.0] * 12
-active = [0] * 12
-bulDmg = [0] * 12
-bulProj = [0.0] * 12
-bulTarX = [-50.0] * 12
-bulTarY = [-50.0] * 12
-bulAng = [0.0] * 12
-bulExpSound = [parse.wExpSound[curWpn]] * 12
-bulHitSound = [parse.wHitSound[curWpn]] * 12
+bulImg = [parse.wBul] * 20  # should probably add different pictures
+effImg = [expSmall] * 20
+effImg2 = [""] * 20
+bulX = [-50.0] * 20
+bulY = [-50.0] * 20
+active = [0] * 20
+bulDmg = [0] * 20
+bulProj = [0.0] * 20
+bulTarX = [-50.0] * 20
+bulTarY = [-50.0] * 20
+bulAng = [0.0] * 20
+bulExpSound = [parse.wExpSound[curWpn]] * 20
+bulHitSound = [parse.wHitSound[curWpn]] * 20
 curBul = 0
 
 outOfAmmoSound = pygame.mixer.Sound('sounds/noammo.wav')
@@ -345,26 +345,27 @@ enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 
 # stats for the enemy weapons
-enemyBulImg = [parse.wBul] * 12  # should probably add different pictures
-enemyEffImg = [expSmall] * 12
-enemyEffImg2 = [""] * 12
-enemyBulX = [-50.0] * 12
-enemyBulY = [-50.0] * 12
-enemyBulActive = [0] * 12
-enemyBulDmg = [0] * 12
-enemyBulProj = [0.0] * 12
-enemyBulTarX = [-50.0] * 12
-enemyBulTarY = [-50.0] * 12
-enemyBulAng = [0.0] * 12
-enemyBulExpSound = [parse.wExpSound[curWpn]] * 12
-enemyBulHitSound = [parse.wHitSound[curWpn]] * 12
+enemyBulImg = [parse.wBul] * 15  # should probably add different pictures
+enemyEffImg = [expSmall] * 15
+enemyEffImg2 = [""] * 15
+enemyBulX = [-50.0] * 15
+enemyBulY = [-50.0] * 15
+enemyBulActive = [0] * 15
+enemyBulDmg = [0] * 15
+enemyBulProj = [0.0] * 15
+enemyBulTarX = [-50.0] * 15
+enemyBulTarY = [-50.0] * 15
+enemyBulAng = [0.0] * 15
+enemyBulExpSound = [parse.wExpSound[curWpn]] * 15
+enemyBulHitSound = [parse.wHitSound[curWpn]] * 15
 enemyCurBul = 0
 
 
 enemySpawn = 0
 # load sounds, channel 0 is reserved for music, all others used for sound effects
-ingameMusic = pygame.mixer.music.load('sounds/background music.wav')
+ingameMusic = pygame.mixer.music.load('sounds/new background music.ogg')
 pygame.mixer.set_num_channels(10)
+pygame.mixer.music.set_volume(1.0)  # volume value between 0 and 1
 pygame.mixer.music.play(-1)
 # slow motion music
 
@@ -372,7 +373,8 @@ pygame.mixer.music.play(-1)
 # List of all weapons (not including WIP):
 # Shotgun, Sub Machine Gun, Pistol
 # get the weapons that the player has equipped
-EqWpnName = ["Shotgun", "Pistol"]  # the 2 weapons used
+EqWpnName = ["Pistol", "Shotgun"]  # the 2 weapons used
+
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:
         ArrayLoc = parse.wName.index(EqWpnName[i])
@@ -441,32 +443,47 @@ while True:
     # ------------ ENEMY STUFF ------------ #
 
     # enemy spawning
-    # remember to set max HP here!
+    # TODO: add boss spawning, make enemies scale with time
     if enemySpawn <= 0:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(120, 180) + (numEnemyAlive * random.randint(10, 20))
+        enemySpawn = random.randint(100, 160) + (numEnemyAlive * random.randint(10, 20))
         if numEnemyAlive < numEnemy:
+            # this spawns a random enemy by first rolling random number from 1 to 10
+            # NOTE: REQUIRES AT LEAST ONE ENEMY TO HAVE 10 FREQUENCY
+            spawnNum = random.randint(1, 10)
+            tempSpawnList = []
+            for i in range(len(parse.eFreq)):
+                # if frequency is greater than the rolled number, add to pool, then
+                # choose a random enemy in the pool to spawn. Rarer enemies also increase the next spawn time.
+                if parse.eFreq[i] >= spawnNum:
+                    tempSpawnList.append(i)
+            spawnNum = random.randint(0, len(tempSpawnList) - 1)
+            selection = tempSpawnList[spawnNum]
+
+            # choose a random enemy in the pool to spawn. Rarer enemies also increase the next spawn time.
+            enemySpawn += 100 - (parse.eFreq[selection] * 10)
+
             # gets the next dead enemy in list
-            next = enemyActive.index(False)
+            nextEnemy = enemyActive.index(False)
 
             # reset stats
-            enemyHP[next] = parse.eHP[0]
-            enemyMaxHP[next] = enemyHP[next] # used for the HP bar
-            enemyImg[next] = parse.eImg[0]
-            enemyBox[next] = parse.eBox[0]
-            enemySpeed[next] = parse.eSpeed[0]
+            enemyHP[nextEnemy] = parse.eHP[selection]
+            enemyMaxHP[nextEnemy] = enemyHP[nextEnemy] # used for the HP bar
+            enemyImg[nextEnemy] = parse.eImg[selection]
+            enemyBox[nextEnemy] = parse.eBox[selection]
+            enemySpeed[nextEnemy] = parse.eSpeed[selection]
 
             # spawn enemy, randomize location
             spawnLoc = random.randint(0, 1)
             if spawnLoc == 0:
-                enemyX[next] = disLength + 40
-                enemyY[next] = 75 + 37
+                enemyX[nextEnemy] = disLength + 40
+                enemyY[nextEnemy] = 75 + 37
             elif spawnLoc == 1:
-                enemyX[next] = disLength + 40
-                enemyY[next] = disHeight - 75 - 37
+                enemyX[nextEnemy] = disLength + 40
+                enemyY[nextEnemy] = disHeight - 75 - 37
 
-            enemyActive[next] = True
+            enemyActive[nextEnemy] = True
 
     # Every 0.5sec, evaluate a path for every enemy to the player
     # path finding for the enemies, using some shady algorithm from online
@@ -543,7 +560,7 @@ while True:
     if mouse[0] == 1 and fireCD <= 0 and relCD[curWpn] <= 0:
         for i in range(parse.wVol[curWpn]):
             curBul += 1
-            if curBul >= 12:
+            if curBul >= 20:
                 curBul = 0
             # set some bullet variables
             bulX[curBul] = posX
@@ -579,7 +596,7 @@ while True:
             fireCD = relCD[curWpn]
 
     # displaying and resetting bullets
-    for i in range(12):
+    for i in range(20):
         if active[i] > 0:
             # check if the bullet hits a wall or enemy, else display it
             gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 8 + 1  # number of times to check for collision
@@ -618,7 +635,7 @@ while True:
                     screen.blit(bulImg[i], (bulX[i] - (center[2]/2), bulY[i] - (center[3]/2)))
 
     # particle effects for bullets
-    for i in range(12):
+    for i in range(20):
         if -15 <= active[i] < 0:
             screen.blit(bulImg[i], (bulX[i] - 45, bulY[i] - 45))
             active[i] += -1 * timeSlow[0]

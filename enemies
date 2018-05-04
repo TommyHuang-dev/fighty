@@ -1,12 +1,52 @@
 save
 
+# used enemies
+
+
+# WIP enemies
+
 enemy
 basic
 health 8
 weapon Enemy Pistol
 img enemy_basic
 hitbox 36
-rarity 1
+frequency 10
 movespeed 2.5
 boss 0
 end
+
+enemy
+speedy
+health 5
+weapon Enemy Pistol
+img enemy_light
+hitbox 32
+frequency 4
+movespeed 4.0
+boss 0
+end
+
+enemy
+heavy
+health 15
+weapon Enemy SMG
+img enemy_heavy
+hitbox 40
+frequency 4
+movespeed 1.5
+boss 0
+end
+
+# basically a miniboss
+enemy
+assault
+health 20
+weapon Enemy Shotgun
+img enemy_assault
+hitbox 44
+frequency 1
+movespeed 2.0
+boss 0
+end
+

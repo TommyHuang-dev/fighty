@@ -129,9 +129,9 @@ def parse_enemy(open_file):
             elif cur_line[0] == "hitbox":
                 eBox.append("")
                 eBox[cur_enemy] = (int(cur_line[1]))
-            elif cur_line[0] == "rarity":
-                eRare.append("")
-                eRare[cur_enemy] = (int(cur_line[1]))
+            elif cur_line[0] == "frequency":
+                eFreq.append("")
+                eFreq[cur_enemy] = (int(cur_line[1]))
             elif cur_line[0] == "movespeed":
                 eSpeed.append("")
                 eSpeed[cur_enemy] = (float(cur_line[1]))
@@ -185,7 +185,7 @@ eHP = []
 eWpn = []
 eImg = []
 eBox = []
-eRare = []
+eFreq = []
 eSpeed = []
 eBoss = []
 

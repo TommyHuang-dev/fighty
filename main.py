@@ -9,7 +9,7 @@ from pathfinder import ai
 # TODO: Add powerups (hp, mana, speed boost, maybe one for inf. ammo?)
 # TODO: Add enemy shooting
 # TODO: Add functionality for special weapon effects (explosion, pierce)
-# TODO: Add levels and stronger enemies
+# TODO: Add levels and stronger enemies (enemies are done, but not the levels)
 # TODO: Add Monies and shop
 
 
@@ -102,6 +102,18 @@ def calc_bullet(bX, bY, acc):
     bulTarX[curBul] = math.cos(bulAng[curBul]) * bulProj[curBul]
 
 
+# this calculates angles and shit for the bullets
+def calc_enemy_bullet(bX, bY, acc):
+    global enemyCurBul, enemyBulTarX, enemyBulTarY, enemyBulProj, enemyBulAng
+    enemyBulAng[enemyCurBul] = (math.atan2(-(enemyBulTarY[enemyCurBul] - bY), enemyBulTarX[enemyCurBul] - bX))
+    if acc > 0:
+        randomAng = math.radians(random.uniform(-acc, acc))  # add some randomness to the bullets
+        enemyBulAng[enemyCurBul] = enemyBulAng[enemyCurBul] + randomAng
+
+    enemyBulTarY[enemyCurBul] = - math.sin(enemyBulAng[enemyCurBul]) * enemyBulProj[enemyCurBul]
+    enemyBulTarX[enemyCurBul] = math.cos(enemyBulAng[enemyCurBul]) * enemyBulProj[enemyCurBul]
+
+
 # this creates the health bar and mana bar
 def create_UI(hp, mp):
     screen.fill(UIHp, (20, 30, 20, hp * 20))
@@ -127,7 +139,7 @@ def weapon_UI(img, ammo, max_ammo, num, selected):  # num = weapon from 0 - 2 (t
         ammo_words = "REL " + str(round(relCD[num] / 60, 1))
     elif ammo <= -1:
         ammo_words = "INF"
-    ammo_text = ammoFont.render(ammo_words , False, (0, 0, 0))
+    ammo_text = ammoFont.render(ammo_words, False, (0, 0, 0))
     screen.blit(ammo_text, (50 - len(ammo_words) * 4.5, 330 + num * 120))
 
 
@@ -188,18 +200,19 @@ def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
             return i
     return -1
 
+
 def draw_map(wall_col, rand, randY):
     pygame.draw.rect(screen, wall_col, (102, 2, 896, 596), 5)
-    screen.fill((45, 45, 45), rect = (disLength - 7, 75, 7, 75))
-    screen.fill((45, 45, 45), rect = (disLength - 7, disHeight - 150, 7, 75))
+    screen.fill((45, 45, 45), rect=(disLength - 7, 75, 7, 75))
+    screen.fill((45, 45, 45), rect=(disLength - 7, disHeight - 150, 7, 75))
     for i in range(len(rand)):
-        screen.fill(wall_col, rect = (rand[i] - 38, randY[i] - 38, 76, 76))
+        screen.fill(wall_col, rect=(rand[i] - 38, randY[i] - 38, 76, 76))
 
 
 def main_menu():
     pass
 
-# initiate pygame and cursors`
+# initiate pygame and cursors
 pygame.mixer.pre_init(22050, -16, 6, 512)
 pygame.mixer.init()
 pygame.init()
@@ -343,27 +356,29 @@ enemyTar = [[0, 0]] * numEnemy  # an array of tile positions, where the enemy wa
 enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to (e.g. [-1,0] is West)
 enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
+enemyShootDelay = [30] * numEnemy  # ticks down, enemy shoots when it hits 0
 
 # stats for the enemy weapons
-enemyBulImg = [parse.wBul] * 15  # should probably add different pictures
-enemyEffImg = [expSmall] * 15
-enemyEffImg2 = [""] * 15
-enemyBulX = [-50.0] * 15
-enemyBulY = [-50.0] * 15
-enemyBulActive = [0] * 15
-enemyBulDmg = [0] * 15
-enemyBulProj = [0.0] * 15
-enemyBulTarX = [-50.0] * 15
-enemyBulTarY = [-50.0] * 15
-enemyBulAng = [0.0] * 15
-enemyBulExpSound = [parse.wExpSound[curWpn]] * 15
-enemyBulHitSound = [parse.wHitSound[curWpn]] * 15
+enemyBulImg = [parse.wBul] * 25  # should probably add different pictures
+enemyEffImg = [expSmall] * 25
+enemyEffImg2 = [""] * 25
+enemyBulX = [-50.0] * 25
+enemyBulY = [-50.0] * 25
+enemyBulActive = [0] * 25
+enemyBulDmg = [0] * 25
+enemyBulProj = [0.0] * 25
+enemyBulTarX = [-50.0] * 25
+enemyBulTarY = [-50.0] * 25
+enemyBulAng = [0.0] * 25
+enemyBulExpSound = [parse.wExpSound[curWpn]] * 25
+enemyBulHitSound = [parse.wHitSound[curWpn]] * 25
 enemyCurBul = 0
 
+enemyWpnIndex = [0] * numEnemy  # index location of its weapon in the main list
 
 enemySpawn = 0
 # load sounds, channel 0 is reserved for music, all others used for sound effects
-ingameMusic = pygame.mixer.music.load('sounds/new background music.ogg')
+ingameMusic = pygame.mixer.music.load('sounds/ftl soundtrack.ogg')
 pygame.mixer.set_num_channels(10)
 pygame.mixer.music.set_volume(1.0)  # volume value between 0 and 1
 pygame.mixer.music.play(-1)
@@ -409,11 +424,20 @@ curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
+
+# load enemy weapons
+for i in range(len(parse.eName)):
+    pass
+
+
 while True:
     screen.fill(backCol)
 
     enemySpawn -= 1 * timeSlow[1]
     # tick down timers, recharge mana
+    for i in range(numEnemy):
+        enemyShootDelay[i] += -1
+
     enemyReEvaluate[0] += -1
     for i in range(2):
         if relCD[i] > 0 and curWpn == i:
@@ -423,6 +447,10 @@ while True:
         if -1 <relCD[i] <= 0:
             wpnAmmo[i] = parse.wAmmo[i]
             relCD[i] += -1
+
+    for i in range(numEnemy):
+        if enemyActive[i]:
+            enemyShootDelay[i] -= 1
 
     timeBuffer[0] += -1
     fireCD += -1 * timeSlow[0]
@@ -443,7 +471,8 @@ while True:
     # ------------ ENEMY STUFF ------------ #
 
     # enemy spawning
-    # TODO: add boss spawning, make enemies scale with time
+    # TODO: add boss spawning, make stronger enemies spawn more frequently with time
+    # TODO: add sounds when enemy shoots
     if enemySpawn <= 0:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
@@ -473,6 +502,9 @@ while True:
             enemyImg[nextEnemy] = parse.eImg[selection]
             enemyBox[nextEnemy] = parse.eBox[selection]
             enemySpeed[nextEnemy] = parse.eSpeed[selection]
+            # equip gun
+            enemyWpnIndex[nextEnemy] = parse.wName.index(parse.eWpn[selection])
+            enemyShootDelay[nextEnemy] = 60 / parse.wRate[enemyWpnIndex[nextEnemy]] * random.uniform(1, 1.5)  # add a bit of unpredictability
 
             # spawn enemy, randomize location
             spawnLoc = random.randint(0, 1)
@@ -491,7 +523,7 @@ while True:
         gridLoc = grid_location(posX, posY)
 
         # reset the delay, checks once per 0.5s
-        enemyReEvaluate[0] = enemyReEvaluate[1]
+        enemyReEvaluate[0] = int(enemyReEvaluate[1] * random.uniform(0.5, 1.0))
         # loop through all of the enemies and get da paths
         for i in range(numEnemy):
             if enemyActive[i]:
@@ -507,7 +539,38 @@ while True:
             move_next_path(i, enemyGridLoc[i], enemyPath[i], enemySpeed[i], enemyX[i])
             # draw!
             screen.blit(enemyImg[i], (enemyX[i] - enemyBox[i] / 2, enemyY[i] - enemyBox[i] / 2))
-            pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
+
+    # enemy shooting
+    for i in range(numEnemy):
+        if enemyActive[i]:
+            if enemyShootDelay[i] <= 0:
+                # randomness, up to 1.5x the rated time delay
+                enemyShootDelay[i] = 60 / parse.wRate[enemyWpnIndex[i]] * random.uniform(1, 1.5)
+                for k in range(parse.wVol[enemyWpnIndex[i]]):
+                    enemyCurBul += 1
+                    if enemyCurBul >= 25:
+                        enemyCurBul = 0
+                    # set some bullet variables
+                    enemyBulX[enemyCurBul] = enemyX[i]
+                    enemyBulY[enemyCurBul] = enemyY[i]
+                    enemyBulActive[enemyCurBul] = 1
+                    enemyBulTarX[enemyCurBul] = posX
+                    enemyBulTarY[enemyCurBul] = posY
+                    enemyBulDmg[enemyCurBul] = parse.wDmg[enemyWpnIndex[i]]
+                    enemyBulProj[enemyCurBul] = parse.wProj[enemyWpnIndex[i]]
+                    # do the same thing for player bullets but with enemy bullets
+                    calc_enemy_bullet(enemyBulX[enemyCurBul], enemyBulY[enemyCurBul], parse.wAcc[enemyWpnIndex[i]])
+                    enemyBulImg[enemyCurBul] = rot_center(parse.wBul[enemyWpnIndex[i]], math.degrees(enemyBulAng[enemyCurBul]))
+                    enemyEffImg[enemyCurBul] = parse.wEff[enemyWpnIndex[i]]
+                    enemyEffImg2[enemyCurBul] = parse.wEff2[enemyWpnIndex[i]]
+                    enemyBulExpSound[enemyCurBul] = pygame.mixer.Sound(parse.wExpSound[enemyWpnIndex[i]])
+                    enemyBulHitSound[enemyCurBul] = pygame.mixer.Sound(parse.wHitSound[enemyWpnIndex[i]])
+
+
+    # draw enemy bullets and make them hit things
+    # yes this code is copied from the player bullet section
+    # also yes i should have made it a class so i wouldnt have to copy it from the player bullet section
+
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()

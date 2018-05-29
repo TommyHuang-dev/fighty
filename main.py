@@ -7,7 +7,6 @@ import time
 from pathfinder import ai
 
 # TODO: Add powerups (hp, mana, speed boost, maybe one for inf. ammo?)
-# TODO: Add enemy shooting
 # TODO: Add functionality for special weapon effects (explosion, pierce)
 # TODO: Add levels and stronger enemies (enemies are done, but not the levels)
 # TODO: Add Monies and shop
@@ -204,10 +203,10 @@ def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
 
 # returns 0 if no hit, otherwise returns 1
 def player_collision(x, y, p_x, p_y, box_bul, box_p):
-    for i in range(numEnemy):
-        if p_x - box_p / 2 - box_bul < x < p_x + box_p / 2 + box_bul and \
-                        p_y - box_p / 2 - box_bul < y < p_y + box_p / 2 + box_bul:
-            return 1
+    distance = math.sqrt((abs(p_x - x)**2) + (abs(p_y - y)**2))
+    if distance <= box_bul + box_p:
+        return 1
+
     return 0
 
 
@@ -395,10 +394,9 @@ pygame.mixer.music.play(-1)
 # slow motion music
 
 # ========= GAME LOGIC ========= #
-# List of all weapons (not including WIP):
+# LIST OF ALL WEAPONS (not including WIP):
 # Shotgun, Sub Machine Gun, Pistol
-# get the weapons that the player has equipped
-EqWpnName = ["Pistol", "Shotgun"]  # the 2 weapons used
+EqWpnName = ["Pistol", "Sub Machine Gun"]  # the 2 weapons used
 
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:

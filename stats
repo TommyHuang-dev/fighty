@@ -9,7 +9,7 @@ damage 3
 volley 1
 fire_rate 3.5
 proj_speed 25
-ammo 8
+ammo 12
 reload 1.5
 inaccuracy 2
 recoil 1.7
@@ -31,7 +31,7 @@ volley 1
 fire_rate 10.0
 proj_speed 25
 ammo 30
-reload 3.0
+reload 2.5
 inaccuracy 3
 recoil 0.6
 speed 0.9
@@ -49,10 +49,10 @@ weapon
 Shotgun
 damage 1
 volley 10
-fire_rate 0.9
+fire_rate 0.95
 proj_speed 20
 ammo 5
-reload 2.5
+reload 2.0
 inaccuracy 5.0
 recoil 3.0
 speed 0.9
@@ -131,7 +131,7 @@ speed 1.0
 effect exp_small
 sound pistol
 sound_death pistol impact
-sound_hit pistol impact
+sound_hit pistol hit
 cost 9999
 owned 1
 end
@@ -145,7 +145,7 @@ fire_rate 3.0
 proj_speed 12
 ammo -1
 reload 1
-inaccuracy 4.5
+inaccuracy 4.0
 recoil 0
 speed 1.0
 image smg
@@ -161,12 +161,12 @@ end
 weapon
 Enemy Shotgun
 damage 1
-volley 4
+volley 5
 fire_rate 0.5
 proj_speed 8
 ammo -1
 reload 1.0
-inaccuracy 6.0
+inaccuracy 6.5
 recoil 0
 speed 1.0
 image shotgun

@@ -190,6 +190,7 @@ def wall_collision(x, y, hitbox):
             return True
     return False
 
+
 # check if a fired bullet hits an enemy. x and y are the bullet coords, enemy_x and enemy_y are an array of enemy locations
 # returns -1 if no hit, otherwise returns the list location of the hit enemy
 def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
@@ -199,6 +200,15 @@ def enemy_collision(x, y, enemy_x, enemy_y, enemy_active, box_e, box_bul):
                         enemy_y[i] - box_e[i] / 2 - box_bul < y < enemy_y[i] + box_e[i] / 2 + box_bul and enemy_active:
             return i
     return -1
+
+
+# returns 0 if no hit, otherwise returns 1
+def player_collision(x, y, p_x, p_y, box_bul, box_p):
+    for i in range(numEnemy):
+        if p_x - box_p / 2 - box_bul < x < p_x + box_p / 2 + box_bul and \
+                        p_y - box_p / 2 - box_bul < y < p_y + box_p / 2 + box_bul:
+            return 1
+    return 0
 
 
 def draw_map(wall_col, rand, randY):
@@ -436,7 +446,7 @@ while True:
     enemySpawn -= 1 * timeSlow[1]
     # tick down timers, recharge mana
     for i in range(numEnemy):
-        enemyShootDelay[i] += -1
+        enemyShootDelay[i] += -1 * timeSlow[1]
 
     enemyReEvaluate[0] += -1
     for i in range(2):
@@ -447,10 +457,6 @@ while True:
         if -1 <relCD[i] <= 0:
             wpnAmmo[i] = parse.wAmmo[i]
             relCD[i] += -1
-
-    for i in range(numEnemy):
-        if enemyActive[i]:
-            enemyShootDelay[i] -= 1
 
     timeBuffer[0] += -1
     fireCD += -1 * timeSlow[0]
@@ -545,12 +551,13 @@ while True:
         if enemyActive[i]:
             if enemyShootDelay[i] <= 0:
                 # randomness, up to 1.5x the rated time delay
-                enemyShootDelay[i] = 60 / parse.wRate[enemyWpnIndex[i]] * random.uniform(1, 1.5)
+                enemyShootDelay[i] = (60 * random.uniform(1, 1.5)) / parse.wRate[enemyWpnIndex[i]]
                 for k in range(parse.wVol[enemyWpnIndex[i]]):
                     enemyCurBul += 1
                     if enemyCurBul >= 25:
                         enemyCurBul = 0
                     # set some bullet variables
+                    #
                     enemyBulX[enemyCurBul] = enemyX[i]
                     enemyBulY[enemyCurBul] = enemyY[i]
                     enemyBulActive[enemyCurBul] = 1
@@ -566,10 +573,67 @@ while True:
                     enemyBulExpSound[enemyCurBul] = pygame.mixer.Sound(parse.wExpSound[enemyWpnIndex[i]])
                     enemyBulHitSound[enemyCurBul] = pygame.mixer.Sound(parse.wHitSound[enemyWpnIndex[i]])
 
-
     # draw enemy bullets and make them hit things
     # yes this code is copied from the player bullet section
     # also yes i should have made it a class so i wouldnt have to copy it from the player bullet section
+    # displaying and resetting bullets
+    for i in range(25):
+        if enemyBulActive[i] > 0:
+            # check if the bullet hits a wall or enemy, else display it
+            gap = int(math.sqrt(enemyBulTarX[i] ** 2 + enemyBulTarY[i] ** 2)) // 8 + 1  # number of times to check for collision
+            for j in range(gap):
+                # check if the bullet hits a wall or player
+                # returns 1 if hit player, 0 if it did not
+                eCenter = enemyBulImg[i].get_rect()
+                playerHitCheck = player_collision(enemyBulX[i], enemyBulY[i], posX, posY, 2, 16)
+                if wall_collision(enemyBulX[i], enemyBulY[i], 2) or enemyBulX[i] + 10 > disLength or enemyBulX[i] < 110 \
+                        or enemyBulY[i] + 10 > disHeight or enemyBulY[i] < 10:
+                    # draw the bullet for one frame before death
+                    screen.blit(enemyBulImg[i], (enemyBulX[i] - (eCenter[2] / 2), enemyBulY[i] - (eCenter[3] / 2)))
+                    enemyBulActive[i] = -1
+                    # change picture to explosion!!!
+                    enemyBulImg[i] = enemyEffImg[i]
+                    enemyBulExpSound[i].play()
+                    break
+                # check if the bullet hits an enemy
+                elif playerHitCheck == 1:
+                    # effects on player (health loss, death check) SHOULD BE ADDED BELOW
+                    # enemyHP[enemyCheck] -= bulDmg[i]
+                    # if enemyHP[enemyCheck] <= 0:
+                    #     enemyActive[enemyCheck] = False
+                    #     enemyX[enemyCheck] = disLength + 25
+                    #     enemyY[enemyCheck] = 75 + 37
+                    health[0] -= enemyBulDmg[i]
+                    if health[0] <= 0:
+                        print("YOU LOST HAHA")
+                        quit()
+
+                    # draw the bullet for one frame before removal
+                    screen.blit(enemyBulImg[i], (enemyBulX[i] - (eCenter[2] / 2), enemyBulY[i] - (eCenter[3] / 2)))
+                    enemyBulActive[i] = -1
+                    # change picture to explosion!!!
+                    enemyBulImg[i] = enemyEffImg[i]
+                    enemyBulHitSound[i].play()
+                    break
+                else:
+                    enemyBulX[i] += enemyBulTarX[i] * timeSlow[1] / gap
+                    enemyBulY[i] += enemyBulTarY[i] * timeSlow[1] / gap
+                    # add hitting enemies here
+                if j == gap - 1:
+                    eCenter = enemyBulImg[i].get_rect()
+                    screen.blit(enemyBulImg[i], (enemyBulX[i] - (eCenter[2]/2), enemyBulY[i] - (eCenter[3]/2)))
+
+    # particle effects for bullets
+    for i in range(20):
+        if -15 <= active[i] < 0:
+            screen.blit(bulImg[i], (bulX[i] - 45, bulY[i] - 45))
+            active[i] += -1 * timeSlow[0]
+        # second frame effect
+        if -6.5 <= active[i] < -5.5 and effImg2[i] != "":
+            bulImg[i] = effImg2[i]
+            active[i] += -1
+        elif -6.5 <= active[i] < -5.5:
+            active[i] = -16
 
 
     # ------------ PLAYER STUFF ------------ #

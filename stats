@@ -53,7 +53,7 @@ fire_rate 0.9
 proj_speed 20
 ammo 5
 reload 2.5
-inaccuracy 5.5
+inaccuracy 5.0
 recoil 3.0
 speed 0.9
 image shotgun

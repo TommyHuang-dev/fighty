@@ -252,7 +252,7 @@ UIMana = [100, 100, 240]
 wallCol = [120, 120, 120]
 crossCol = [0, 40, 10]
 UIHeal = [70, 250, 70]
-UIDmg = [250, 250, 250]
+UIDmg = [240, 240, 240]
 
 # GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
 #                      and 0 from the top. It is 11x8, first one and last two never have walls
@@ -291,7 +291,7 @@ timeSlow = [1.0, 1.0]  # self slow, enemy slow
 
 # player variables
 playerImg = pygame.image.load("player.png").convert_alpha()
-posX = 150.0  # start in the top left corner
+posX = 150.0  # start in the top left cornerdssaa
 posY = 50.0
 baseSpeed = 4.5
 health = [10, 10]  # cur/max hp
@@ -306,7 +306,7 @@ curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
-# for ai
+# for aias
 gridLoc = [0, 0]
 
 # effect pictures and stuff
@@ -410,7 +410,7 @@ powerupType = "none"
 
 # health change animations
 changeAnimation = 0
-damageTaken = 0
+hpChange = 0
 
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP):
@@ -462,7 +462,7 @@ while True:
 
     changeAnimation -= 1
     if changeAnimation <= 0:
-        damageTaken = 0
+        hpChange = 0
 
     activePowerup -= 1
     if activePowerup <= 0:
@@ -513,12 +513,17 @@ while True:
         if powerupType == "health":
             activePowerup = 30
             changeAnimation = 30
-            damageTaken = 2
+            hpChange = 2
+            # if hp is already at 9 or 10, change hpChange
+            if hpChange + health[0] > health[1]:
+                hpChange = health[1] - health[0]
+
             health[0] += 2
+            # make sure hp doesnt go above 10
             if health[0] > health[1]:
                 health[0] = health[1]
 
-        # this is derpy
+        # this is derpy, move the powerup so that the player cant repeatedly get it
         powerupCoords[0] = -100
         powerupCoords[1] = -100
 
@@ -665,7 +670,7 @@ while True:
                     enemyBulImg[i] = enemyEffImg[i]
                     enemyBulHitSound[i].play()
                     health[0] -= enemyBulDmg[i]
-                    damageTaken -= enemyBulDmg[i]
+                    hpChange -= enemyBulDmg[i]
                     changeAnimation = 30
                     if health[0] <= 0:
                         print("YOU LOST HAHA")
@@ -859,11 +864,10 @@ while True:
 
     # screen.fill(UIHp, (20, 30, 20, hp * 20))
     if changeAnimation > 0:
-        if damageTaken > 0:  # heal
-            screen.fill(UIHeal, (22, 30 + (health[0] - damageTaken) * 20, 17, damageTaken * 20))
-
-        elif damageTaken < 0:  # took damage
-            screen.fill(UIDmg, (22, 30 + health[0] * 20, 17, -damageTaken * 20))
+        if hpChange > 0:  # heal
+            screen.fill(UIHeal, (22, 30 + (health[0] - hpChange) * 20, 17, hpChange * 20))
+        elif hpChange < 0:  # took damage
+            screen.fill(UIDmg, (22, 30 + health[0] * 20, 17, -hpChange * 20))
 
     # update display!
     pygame.display.update()

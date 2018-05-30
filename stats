@@ -126,7 +126,7 @@ reload 1
 inaccuracy 3.0
 recoil 0
 image pistol
-bullet basic
+bullet basic_enemy
 speed 1.0
 effect exp_small
 sound pistol
@@ -149,7 +149,7 @@ inaccuracy 4.0
 recoil 0
 speed 1.0
 image smg
-bullet basic
+bullet basic_enemy
 effect exp_small
 sound smg
 sound_death smg impact
@@ -161,16 +161,16 @@ end
 weapon
 Enemy Shotgun
 damage 1
-volley 5
-fire_rate 0.5
-proj_speed 8
+volley 6
+fire_rate 0.666
+proj_speed 10
 ammo -1
 reload 1.0
-inaccuracy 6.5
+inaccuracy 7.5
 recoil 0
 speed 1.0
 image shotgun
-bullet shotgun bullet
+bullet shotgun bullet enemy
 effect exp_pellet
 sound shotgun
 sound_death shotgun impact

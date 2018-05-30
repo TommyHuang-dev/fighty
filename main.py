@@ -251,6 +251,8 @@ UIHp = [250, 70, 70]
 UIMana = [100, 100, 240]
 wallCol = [120, 120, 120]
 crossCol = [0, 40, 10]
+UIHeal = [70, 250, 70]
+UIDmg = [250, 250, 250]
 
 # GRID SPECIFICATIONS: center of walls start 125 + 37 from the left (100 is taken up by the ui)
 #                      and 0 from the top. It is 11x8, first one and last two never have walls
@@ -367,6 +369,8 @@ enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 enemyShootDelay = [30] * numEnemy  # ticks down, enemy shoots when it hits 0
 
+bossSpawn = random.randint(300, 500)
+
 # stats for the enemy weapons
 enemyBulImg = [parse.wBul] * 25  # should probably add different pictures
 enemyEffImg = [expSmall] * 25
@@ -386,6 +390,9 @@ enemyCurBul = 0
 enemyWpnIndex = [0] * numEnemy  # index location of its weapon in the main list
 
 enemySpawn = 0
+# play this sound before a boss, show a warning!
+alertSound = pygame.mixer.Sound('sounds/alert.wav')
+
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.music.load('sounds/ftl soundtrack.ogg')
 pygame.mixer.set_num_channels(10)
@@ -393,10 +400,22 @@ pygame.mixer.music.set_volume(1.0)  # volume value between 0 and 1
 pygame.mixer.music.play(-1)
 # slow motion music
 
+# power ups
+healthPic = pygame.image.load("powerup/health_pack.png").convert_alpha()
+
+powerupCD = random.randint(300, 900)  # spawn a powerup when this reaches
+powerupCoords = [0, 0]
+activePowerup = 0  # delay before powerupCD counts down, usually depends on duration of powerup
+powerupType = "none"
+
+# health change animations
+changeAnimation = 0
+damageTaken = 0
+
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP):
 # Shotgun, Sub Machine Gun, Pistol
-EqWpnName = ["Pistol", "Sub Machine Gun"]  # the 2 weapons used
+EqWpnName = ["Pistol", "Shotgun"]  # the 2 weapons used
 
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:
@@ -441,6 +460,14 @@ for i in range(len(parse.eName)):
 while True:
     screen.fill(backCol)
 
+    changeAnimation -= 1
+    if changeAnimation <= 0:
+        damageTaken = 0
+
+    activePowerup -= 1
+    if activePowerup <= 0:
+        powerupCD -= 1 * timeSlow[1]
+
     enemySpawn -= 1 * timeSlow[1]
     # tick down timers, recharge mana
     for i in range(numEnemy):
@@ -472,6 +499,35 @@ while True:
         timeSlow[1] = 1.0
         # pygame.mixer.music.set_volume(1.0)
 
+    # ------------ POWERUP STUFF ---------- #
+    if powerupCD <= 0 and powerupType == "none":
+        powerupCoords[0] = random.randint(150, 950)
+        powerupCoords[1] = random.randint(50, 550)
+        while wall_collision(powerupCoords[0], powerupCoords[1], 25):
+            powerupCoords[0] = random.randint(150, 950)
+            powerupCoords[1] = random.randint(50, 550)
+        powerupType = "health"
+
+    if player_collision(powerupCoords[0], powerupCoords[1], posX, posY, 22, 10):
+        # heal 2 points, maybe play animation?
+        if powerupType == "health":
+            activePowerup = 30
+            changeAnimation = 30
+            damageTaken = 2
+            health[0] += 2
+            if health[0] > health[1]:
+                health[0] = health[1]
+
+        # this is derpy
+        powerupCoords[0] = -100
+        powerupCoords[1] = -100
+
+        powerupCD = random.randint(900, 1800)
+        powerupType = "none"
+
+    if powerupCD <= 0:
+        screen.blit(healthPic, (powerupCoords[0], powerupCoords[1]))
+
     # ------------ ENEMY STUFF ------------ #
 
     # enemy spawning
@@ -480,7 +536,7 @@ while True:
     if enemySpawn <= 0:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(100, 160) + (numEnemyAlive * random.randint(10, 20))
+        enemySpawn = random.randint(80, 120) + (numEnemyAlive * random.randint(10, 15))
         if numEnemyAlive < numEnemy:
             # this spawns a random enemy by first rolling random number from 1 to 10
             # NOTE: REQUIRES AT LEAST ONE ENEMY TO HAVE 10 FREQUENCY
@@ -489,7 +545,7 @@ while True:
             for i in range(len(parse.eFreq)):
                 # if frequency is greater than the rolled number, add to pool, then
                 # choose a random enemy in the pool to spawn. Rarer enemies also increase the next spawn time.
-                if parse.eFreq[i] >= spawnNum:
+                if parse.eFreq[i] >= spawnNum - level:
                     tempSpawnList.append(i)
             spawnNum = random.randint(0, len(tempSpawnList) - 1)
             selection = tempSpawnList[spawnNum]
@@ -601,10 +657,6 @@ while True:
                     #     enemyActive[enemyCheck] = False
                     #     enemyX[enemyCheck] = disLength + 25
                     #     enemyY[enemyCheck] = 75 + 37
-                    health[0] -= enemyBulDmg[i]
-                    if health[0] <= 0:
-                        print("YOU LOST HAHA")
-                        quit()
 
                     # draw the bullet for one frame before removal
                     screen.blit(enemyBulImg[i], (enemyBulX[i] - (eCenter[2] / 2), enemyBulY[i] - (eCenter[3] / 2)))
@@ -612,6 +664,13 @@ while True:
                     # change picture to explosion!!!
                     enemyBulImg[i] = enemyEffImg[i]
                     enemyBulHitSound[i].play()
+                    health[0] -= enemyBulDmg[i]
+                    damageTaken -= enemyBulDmg[i]
+                    changeAnimation = 30
+                    if health[0] <= 0:
+                        print("YOU LOST HAHA")
+                        quit()
+
                     break
                 else:
                     enemyBulX[i] += enemyBulTarX[i] * timeSlow[1] / gap
@@ -797,6 +856,14 @@ while True:
     create_UI(health[0], mana[0])
     weapon_UI(parse.wImg[0], wpnAmmo[0], parse.wAmmo[0], 0, curWpn)
     weapon_UI(parse.wImg[1], wpnAmmo[1], parse.wAmmo[1], 1, curWpn)
+
+    # screen.fill(UIHp, (20, 30, 20, hp * 20))
+    if changeAnimation > 0:
+        if damageTaken > 0:  # heal
+            screen.fill(UIHeal, (22, 30 + (health[0] - damageTaken) * 20, 17, damageTaken * 20))
+
+        elif damageTaken < 0:  # took damage
+            screen.fill(UIDmg, (22, 30 + health[0] * 20, 17, -damageTaken * 20))
 
     # update display!
     pygame.display.update()

@@ -2,9 +2,6 @@ save
 
 # used enemies
 
-
-# WIP enemies
-
 enemy
 basic
 health 8
@@ -49,4 +46,11 @@ frequency 1
 movespeed 2.0
 boss 0
 end
+
+
+# WIP enemies
+
+
+
+# BOSSES
 

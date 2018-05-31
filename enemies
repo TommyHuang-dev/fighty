@@ -48,6 +48,19 @@ boss 0
 end
 
 
+# basic boss
+enemy
+tank
+health 100
+weapon Enemy Area Blaster
+img enemy_tank
+hitbox 50
+frequency 10
+movespeed 1.0
+boss 1
+end
+
+
 # WIP enemies
 
 

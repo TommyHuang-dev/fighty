@@ -114,12 +114,16 @@ def calc_enemy_bullet(bX, bY, acc):
 
 
 # this creates the health bar and mana bar
-def create_UI(hp, mp):
+def create_UI(hp, mp, boss):
+    global alertPic
     screen.fill(UIHp, (20, 30, 20, hp * 20))
     pygame.draw.rect(screen, [0, 0, 0], [20, 30, 20, 200], 2)
     pygame.draw.line(screen, [0, 0, 0], [20, 130], [40, 130], 3)
     for i in range(10):
         pygame.draw.line(screen, [0, 0, 0], [20, 30 + 20 * i], [40, 30 + 20 * i])
+
+    if boss > 0:
+        screen.blit(alertPic, (425, 25))
 
     screen.fill(UIMana, (60, 30, 20, int(mp * 2)))
     pygame.draw.rect(screen, [0, 0, 0], [60, 30, 20, 200], 2)
@@ -285,9 +289,17 @@ for i in range(12):  # x axis
 
 # global game variables
 level = 0
-timescale = 1.0
+levelTimer = 1200  # increase level every 20 or 30sec
 timeBuffer = [0, 20]  # used so that pressing space doesn't accidentally do it 2 times
 timeSlow = [1.0, 1.0]  # self slow, enemy slow
+
+bossMode = False
+bossSpawnDelay = -1
+bossRarity = 5  # usually 20
+
+# alert sound and picture
+alertPic = pygame.image.load("effects/alert.png")
+alertSound = pygame.mixer.Sound("sounds/alert.wav")
 
 # player variables
 playerImg = pygame.image.load("player.png").convert_alpha()
@@ -360,6 +372,7 @@ enemyMaxHP = enemyHP * numEnemy  # used for the HP bar
 enemyImg = [parse.eImg[0]] * numEnemy
 enemyBox = [parse.eBox[0]] * numEnemy
 enemySpeed = [parse.eSpeed[0]] * numEnemy
+enemyIsBoss = [False] * numEnemy
 enemyX = [disLength + 40] * numEnemy
 enemyY = [75 + 37] * numEnemy
 enemyGridLoc = grid_location(75 + 37, disLength - 10) * numEnemy
@@ -368,8 +381,6 @@ enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to 
 enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 enemyShootDelay = [30] * numEnemy  # ticks down, enemy shoots when it hits 0
-
-bossSpawn = random.randint(300, 500)
 
 # stats for the enemy weapons
 enemyBulImg = [parse.wBul] * 25  # should probably add different pictures
@@ -408,6 +419,10 @@ powerupCoords = [0, 0]
 activePowerup = 0  # delay before powerupCD counts down, usually depends on duration of powerup
 powerupType = "none"
 
+# powerup sounds
+spawnSound = pygame.mixer.Sound("sounds/spawn.wav")
+pickupHealth = pygame.mixer.Sound("sounds/pickupHealth.wav")
+
 # health change animations
 changeAnimation = 0
 hpChange = 0
@@ -415,7 +430,7 @@ hpChange = 0
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP):
 # Shotgun, Sub Machine Gun, Pistol
-EqWpnName = ["Pistol", "Shotgun"]  # the 2 weapons used
+EqWpnName = ["Sub Machine Gun", "Shotgun"]  # the 2 weapons used
 
 for i in range(1, -1, -1):
     if EqWpnName[i] in parse.wName:
@@ -460,6 +475,13 @@ for i in range(len(parse.eName)):
 while True:
     screen.fill(backCol)
 
+    # increase level, which increases difficulty by spawning higher level enemies
+    levelTimer -= 1 * timeSlow[1]
+    if levelTimer <= 0:
+        levelTimer = 1800  # 30sec per level
+        level += 1
+        print("level increased! Level: ", level)
+
     changeAnimation -= 1
     if changeAnimation <= 0:
         hpChange = 0
@@ -469,6 +491,7 @@ while True:
         powerupCD -= 1 * timeSlow[1]
 
     enemySpawn -= 1 * timeSlow[1]
+    bossSpawnDelay -= 1 * timeSlow[1]
     # tick down timers, recharge mana
     for i in range(numEnemy):
         enemyShootDelay[i] += -1 * timeSlow[1]
@@ -500,20 +523,29 @@ while True:
         # pygame.mixer.music.set_volume(1.0)
 
     # ------------ POWERUP STUFF ---------- #
+    # spawn powerup
     if powerupCD <= 0 and powerupType == "none":
-        powerupCoords[0] = random.randint(150, 950)
-        powerupCoords[1] = random.randint(50, 550)
-        while wall_collision(powerupCoords[0], powerupCoords[1], 25):
-            powerupCoords[0] = random.randint(150, 950)
-            powerupCoords[1] = random.randint(50, 550)
-        powerupType = "health"
+        # set random location
+        powerupCoords[0] = random.randint(140, 940)
+        powerupCoords[1] = random.randint(40, 540)
+        # make sure it doesnt spawn on top of wall or player, re-randomize if it does
+        while wall_collision(powerupCoords[0], powerupCoords[1], 25) or \
+                player_collision(powerupCoords[0], powerupCoords[1], posX, posY, 40, 25):
+                powerupCoords[0] = random.randint(150, 950)
+                powerupCoords[1] = random.randint(50, 550)
 
-    if player_collision(powerupCoords[0], powerupCoords[1], posX, posY, 22, 10):
+        powerupType = "health"
+        spawnSound.play()
+
+    if player_collision(powerupCoords[0], powerupCoords[1], posX, posY, 20, 10):
         # heal 2 points, maybe play animation?
         if powerupType == "health":
             activePowerup = 30
+            # this is for the green flash in the hp bar
             changeAnimation = 30
             hpChange = 2
+            # play sound
+            pickupHealth.play()
             # if hp is already at 9 or 10, change hpChange
             if hpChange + health[0] > health[1]:
                 hpChange = health[1] - health[0]
@@ -527,21 +559,23 @@ while True:
         powerupCoords[0] = -100
         powerupCoords[1] = -100
 
-        powerupCD = random.randint(900, 1800)
+        powerupCD = random.randint(900, 1500)
         powerupType = "none"
 
     if powerupCD <= 0:
-        screen.blit(healthPic, (powerupCoords[0], powerupCoords[1]))
+        if powerupType == "health":
+            screen.blit(healthPic, (powerupCoords[0] - healthPic.get_rect()[3] / 2, powerupCoords[1] - healthPic.get_rect()[3] / 2))
+        #elif other power types
 
     # ------------ ENEMY STUFF ------------ #
 
     # enemy spawning
     # TODO: add boss spawning, make stronger enemies spawn more frequently with time
     # TODO: add sounds when enemy shoots
-    if enemySpawn <= 0:
+    if enemySpawn <= 0 and not bossMode:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(80, 120) + (numEnemyAlive * random.randint(10, 15))
+        enemySpawn = random.randint(100, 150) + (numEnemyAlive * random.randint(12, 16))
         if numEnemyAlive < numEnemy:
             # this spawns a random enemy by first rolling random number from 1 to 10
             # NOTE: REQUIRES AT LEAST ONE ENEMY TO HAVE 10 FREQUENCY
@@ -550,13 +584,10 @@ while True:
             for i in range(len(parse.eFreq)):
                 # if frequency is greater than the rolled number, add to pool, then
                 # choose a random enemy in the pool to spawn. Rarer enemies also increase the next spawn time.
-                if parse.eFreq[i] >= spawnNum - level:
+                if parse.eFreq[i] >= spawnNum - level and parse.eBoss[i] == 0:
                     tempSpawnList.append(i)
             spawnNum = random.randint(0, len(tempSpawnList) - 1)
             selection = tempSpawnList[spawnNum]
-
-            # choose a random enemy in the pool to spawn. Rarer enemies also increase the next spawn time.
-            enemySpawn += 100 - (parse.eFreq[selection] * 10)
 
             # gets the next dead enemy in list
             nextEnemy = enemyActive.index(False)
@@ -567,6 +598,54 @@ while True:
             enemyImg[nextEnemy] = parse.eImg[selection]
             enemyBox[nextEnemy] = parse.eBox[selection]
             enemySpeed[nextEnemy] = parse.eSpeed[selection]
+            enemyIsBoss[nextEnemy] = False
+            # equip gun
+            enemyWpnIndex[nextEnemy] = parse.wName.index(parse.eWpn[selection])
+            enemyShootDelay[nextEnemy] = 60 / parse.wRate[enemyWpnIndex[nextEnemy]] * random.uniform(1, 1.5)  # add a bit of unpredictability
+
+            # spawn enemy, randomize location
+            spawnLoc = random.randint(0, 1)
+            if spawnLoc == 0:
+                enemyX[nextEnemy] = disLength + 40
+                enemyY[nextEnemy] = 75 + 37
+            elif spawnLoc == 1:
+                enemyX[nextEnemy] = disLength + 40
+                enemyY[nextEnemy] = disHeight - 75 - 37
+
+            enemyActive[nextEnemy] = True
+
+            # roll for a boss every x enemies
+            if random.randint(1, bossRarity) == 1:
+                bossMode = True
+                bossSpawnDelay = 300
+                alertSound.play()
+
+    elif bossMode and -2 <= bossSpawnDelay <= 0:
+        bossSpawnDelay -= 5
+        # spawn boss, basically same as normal enemy
+        numEnemyAlive = enemyActive.count(True)
+        if numEnemyAlive < numEnemy:
+            # this spawns a random enemy by first rolling random number from 1 to 10
+            # NOTE: REQUIRES AT LEAST ONE ENEMY TO HAVE 10 FREQUENCY
+            spawnNum = random.randint(1, 10)
+            tempSpawnList = []
+            for i in range(len(parse.eFreq)):
+                # if frequency is greater than the rolled number AND its a boss, add to pool
+                if parse.eFreq[i] >= spawnNum - level and parse.eBoss[i] == 1:
+                    tempSpawnList.append(i)
+            spawnNum = random.randint(0, len(tempSpawnList) - 1)
+            selection = tempSpawnList[spawnNum]
+
+            # gets the next dead enemy in list
+            nextEnemy = enemyActive.index(False)
+
+            # reset stats
+            enemyHP[nextEnemy] = parse.eHP[selection]
+            enemyMaxHP[nextEnemy] = enemyHP[nextEnemy]  # used for the HP bar
+            enemyImg[nextEnemy] = parse.eImg[selection]
+            enemyBox[nextEnemy] = parse.eBox[selection]
+            enemySpeed[nextEnemy] = parse.eSpeed[selection]
+            enemyIsBoss[nextEnemy] = True
             # equip gun
             enemyWpnIndex[nextEnemy] = parse.wName.index(parse.eWpn[selection])
             enemyShootDelay[nextEnemy] = 60 / parse.wRate[enemyWpnIndex[nextEnemy]] * random.uniform(1, 1.5)  # add a bit of unpredictability
@@ -808,6 +887,9 @@ while True:
                         enemyActive[enemyCheck] = False
                         enemyX[enemyCheck] = disLength + 25
                         enemyY[enemyCheck] = 75 + 37
+                        if enemyIsBoss[enemyCheck]:
+                            bossMode = False
+
                     # draw the bullet for one frame before death
                     screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
                     active[i] = -1
@@ -843,8 +925,12 @@ while True:
     for i in range(numEnemy):
         if enemyActive[i]:
             # draw HP bars (red inside then black outline)
-            pygame.draw.rect(screen, UIHp, (enemyX[i] - 25, enemyY[i] - 40, enemyHP[i] / enemyMaxHP[i] * 50, 10))
-            pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
+            if not enemyIsBoss[i]:
+                pygame.draw.rect(screen, UIHp, (enemyX[i] - 25, enemyY[i] - 40, enemyHP[i] / enemyMaxHP[i] * 50, 10))
+                pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 25, enemyY[i] - 40, 50, 10), 1)
+            else:
+                pygame.draw.rect(screen, UIHp, (enemyX[i] - 50, enemyY[i] - 50, enemyHP[i] / enemyMaxHP[i] * 100, 14))
+                pygame.draw.rect(screen, (0, 0, 0), (enemyX[i] - 50, enemyY[i] - 50, 100, 14), 2)
 
     # draw crosshair
     dist = math.sqrt((mousePos[0] - posX) ** 2 + (mousePos[1] - posY) ** 2)
@@ -858,16 +944,16 @@ while True:
     pygame.draw.rect(screen, UIBod, [1, 1, 100, disHeight - 2], 3)
 
     # hp bars and stuff
-    create_UI(health[0], mana[0])
+    create_UI(health[0], mana[0], bossSpawnDelay)
     weapon_UI(parse.wImg[0], wpnAmmo[0], parse.wAmmo[0], 0, curWpn)
     weapon_UI(parse.wImg[1], wpnAmmo[1], parse.wAmmo[1], 1, curWpn)
 
     # screen.fill(UIHp, (20, 30, 20, hp * 20))
     if changeAnimation > 0:
         if hpChange > 0:  # heal
-            screen.fill(UIHeal, (22, 30 + (health[0] - hpChange) * 20, 17, hpChange * 20))
+            screen.fill(UIHeal, (22, 30 + (health[0] - hpChange) * 20, 17, hpChange * 20 - 1))
         elif hpChange < 0:  # took damage
-            screen.fill(UIDmg, (22, 30 + health[0] * 20, 17, -hpChange * 20))
+            screen.fill(UIDmg, (22, 30 + health[0] * 20, 17, -hpChange * 20 - 1))
 
     # update display!
     pygame.display.update()

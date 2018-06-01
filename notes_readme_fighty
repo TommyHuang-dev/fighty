@@ -19,6 +19,7 @@ bullet normal (30x30 sprite for the bullet in folder bullets/)
 effect small_exp (90x90 sprite when the projectile hits something
 sound (name of the sound file .wav)
 sound_death (name of the sound file when it explodes .wav)
+special "" (name of a special effect, currently accepts: "phase", )
 sound_hit (name of the sound file when it hits an enemy, similar to sound_death)
 cost # (def 0)
 owned 0 (1 if it can be bought in the store, 0 if it cannot)

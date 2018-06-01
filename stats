@@ -87,7 +87,7 @@ recoil 0
 image katana
 bullet katana_slash
 special melee
-speed 1.1
+speed 1.0
 effect melee_strike
 sound katana
 sound_death none

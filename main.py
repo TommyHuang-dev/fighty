@@ -233,16 +233,16 @@ def calc_melee_hit(x, y, enemy_x, enemy_y, enemy_box, melee_box, angle):
     # draw two circles. If the enemy is in the front circle but not in the behind circle, return true
     x_tar = x
     y_tar = y
-    x_tar2 = - math.sin(bulAng[curBul]) * - melee_box
-    y_tar2 = math.cos(bulAng[curBul]) * -melee_box
-    hitList = []
+    x_tar2 = x + (math.sin(angle + math.pi / 2) * - melee_box)
+    y_tar2 = y + (math.cos(angle + math.pi / 2) * - melee_box)
+    hit_list = []
     for i in range(len(enemy_x)):
         distance = math.sqrt((enemy_x[i] - x_tar) ** 2 + (enemy_y[i] - y_tar) ** 2)
         distance_2 = math.sqrt((enemy_x[i] - x_tar2) ** 2 + (enemy_y[i] - y_tar2) ** 2)
-        if distance < melee_box + enemy_box / 2 and distance_2 > melee_box:
-            hitList.append(i)
+        if distance < melee_box + enemy_box[i] / 2 and distance_2 > melee_box:
+            hit_list.append(i)
 
-    return hitList
+    return hit_list
 
 
 # initiate pygame and cursors
@@ -269,8 +269,8 @@ ammoFont = pygame.font.SysFont('Courier New', 15)
 # background and objects like walls
 backCol = [240, 240, 240]
 UIBod = [125, 125, 225]
-UICol = [220, 240, 240]
-UISlow = [190, 200, 220]
+UICol = [210, 230, 240]
+UISlow = [180, 200, 210]
 UIHp = [250, 70, 70]
 UIMana = [100, 100, 240]
 wallCol = [120, 120, 120]
@@ -326,8 +326,8 @@ alertSound = pygame.mixer.Sound("sounds/alert.wav")
 playerImg = pygame.image.load("player.png").convert_alpha()
 posX = 150.0  # start in the top left corner
 posY = 50.0
-baseSpeed = 14.5
-health = [9, 10]  # cur/max hp
+baseSpeed = 4.5
+health = [10, 10]  # cur/max hp
 mana = [100, 100]  # cur/max mana
 manaChargeDelay = [0, 30]  # number of ticks of delay before mana starts to recharge
 manaUseSpeed = [20, 10]  # usage rate / recharge rate per second
@@ -424,8 +424,6 @@ enemyCurBul = 0
 enemyWpnIndex = [0] * numEnemy  # index location of its weapon in the main list
 
 enemySpawn = 0
-# play this sound before a boss, show a warning!
-alertSound = pygame.mixer.Sound('sounds/alert.wav')
 
 # load sounds, channel 0 is reserved for music, all others used for sound effects
 ingameMusic = pygame.mixer.music.load('sounds/ftl soundtrack.ogg')
@@ -451,7 +449,7 @@ changeAnimation = 0
 
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP):
-# Shotgun, Sub Machine Gun, Pistol
+# Shotgun, Sub Machine Gun, Pistol, Katana. A melee weapon should always be the 3rd weapon
 EqWpnName = ["Sub Machine Gun", "Pistol", "Katana"]  # the 2 weapons used
 
 for i in range(2, -1, -1):
@@ -489,11 +487,14 @@ curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
-
-# load enemy weapons
-for i in range(len(parse.eName)):
-    pass
-
+meleeAnimation = 0
+meleeAngle = 0
+meleeImg = parse.wBul[2]
+meleeDashCD = [0, 60]
+meleeX = 0
+meleeY = 0
+dashTarget = [-50, -50]
+dummyBullets = load_pics("projectiles/", "dummy")
 
 while True:
     screen.fill(backCol)
@@ -516,6 +517,7 @@ while True:
     # tick down timers, recharge mana
     for i in range(numEnemy):
         enemyShootDelay[i] += -1 * timeSlow[1]
+    meleeDashCD[0] -= 1
 
     enemyReEvaluate[0] += -1
     for i in range(2):
@@ -761,16 +763,20 @@ while True:
                     enemyBulActive[i] = -1
                     # change picture to explosion!!!
                     enemyBulImg[i] = enemyEffImg[i]
-                    enemyBulHitSound[i].play()
-                    health[0] -= enemyBulDmg[i]
-                    # animation stuffs
-                    if changeAnimation > 0:
-                        changeAnimation = -20 * enemyBulDmg[i]
+                    if meleeDashCD[0] > meleeDashCD[1] - 10:
+                        enemyBulExpSound[i].play()
                     else:
-                        changeAnimation -= 20 * enemyBulDmg[i]
-                    if health[0] <= 0:
-                        print("YOU LOST HAHA")
-                        quit()
+                        enemyBulHitSound[i].play()
+                        health[0] -= enemyBulDmg[i]
+                        # animation stuffs
+                        if changeAnimation > 0:
+                            changeAnimation = -20 * enemyBulDmg[i]
+                        else:
+                            changeAnimation -= 20 * enemyBulDmg[i]
+                        if health[0] <= 0:
+                            print("YOU LOST HAHA")
+                            quit()
+
                     break
 
                 else:
@@ -781,17 +787,11 @@ while True:
                     eCenter = enemyBulImg[i].get_rect()
                     screen.blit(enemyBulImg[i], (enemyBulX[i] - (eCenter[2]/2), enemyBulY[i] - (eCenter[3]/2)))
 
-    # particle effects for bullets
-    for i in range(20):
-        if -15 <= active[i] < 0:
-            screen.blit(bulImg[i], (bulX[i] - 45, bulY[i] - 45))
-            active[i] += -1 * timeSlow[0]
-        # second frame effect
-        if -6.5 <= active[i] < -5.5 and effImg2[i] != "":
-            bulImg[i] = effImg2[i]
-            active[i] += -1
-        elif -6.5 <= active[i] < -5.5:
-            active[i] = -16
+    # particle effects for enemy bullets
+    for i in range(30):
+        if -4 <= enemyBulActive[i] < 0:
+            screen.blit(enemyBulImg[i], (enemyBulX[i] - 45, enemyBulY[i] - 45))
+            enemyBulActive[i] += -1 * timeSlow[1]
 
     # ------------ PLAYER STUFF ------------ #
     pressed = pygame.key.get_pressed()
@@ -808,14 +808,15 @@ while True:
         timeBuffer[0] = timeBuffer[1]
         if timeSlow[0] != 1 or timeSlow[1] != 1:
             timeSlow = [1.0, 1.0]
-            # pygame.mixer.music.set_volume(1.0)
+
         elif mana[0] > 0:
             timeSlow = [1.0, 0.3]  # self slow, enemy slow
-            manaChargeDelay[0] = 30
-            # pygame.mixer.music.set_volume(0.5)
+            manaChargeDelay[0] = manaChargeDelay[1]
 
     # move player and display player
-    move_player(pressed, speed * timeSlow[0])
+    if meleeDashCD[0] < meleeDashCD[1] - 10:
+        move_player(pressed, speed * timeSlow[0])
+
     screen.blit(playerImg, (posX - 20, posY - 20))
 
     # switch weapon (knife, wpn 0, wpn 1)
@@ -856,24 +857,36 @@ while True:
 
         # do special stuff for melee weapons
         if parse.wSpecial[curWpn] == "melee":
-            angle = (math.atan2(-(mousePos[1] - posY), mousePos[0] - posX))
-            enemiesHit = calc_melee_hit(posX, posY, enemyX, enemyY, enemyBox, 70, angle)
-            print(enemiesHit)
+            atkSound.play()
+            meleeAngle = (math.atan2(-(mousePos[1] - posY), mousePos[0] - posX))
+            meleeAnimation = 8
+            meleeImg = rot_center(parse.wBul[2], math.degrees(meleeAngle))
+            enemiesHit = calc_melee_hit(posX, posY, enemyX, enemyY, enemyBox, 70, meleeAngle)
+
             for i in range(len(enemiesHit)):
+                # spawn dummy bullets there for effect
+                curBul += 1
+                if curBul >= 20:
+                    curBul = 0
+                bulX[curBul] = enemyX[enemiesHit[i]]
+                bulY[curBul] = enemyY[enemiesHit[i]]
+                active[curBul] = -1
+                bulImg[curBul] = parse.wEff[curWpn]
+                effImg2[curBul] = parse.wEff2[curWpn]
+                bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
+                bulHitSound[curBul].play()
+
                 # do damage to enemies
-                pass
-                '''enemyHP[enemiesHit[i]] -= parse.wDmg[curWpn]
-                if enemyHP[enemyCheck] <= 0:
-                    enemyActive[enemyCheck] = False
-                    enemyX[enemyCheck] = disLength + 25
-                    enemyY[enemyCheck] = 75 + 37
-                    if enemyIsBoss[enemyCheck]:
+                enemyHP[enemiesHit[i]] -= parse.wDmg[curWpn]
+                if enemyHP[enemiesHit[i]] <= 0:
+                    enemyActive[enemiesHit[i]] = False
+                    enemyX[enemiesHit[i]] = disLength + 25
+                    enemyY[enemiesHit[i]] = 75 + 37
+                    if enemyIsBoss[enemiesHit[i]]:
                         bossMode = False
                         bossMinSeparation = 10
                     else:
-                        bossMinSeparation -= 1 '''
-                # spawn bullets there for effect
-
+                        bossMinSeparation -= 1
 
         # randomize every bullet in the volley
         else:
@@ -902,6 +915,24 @@ while True:
             wpnInAcc[curWpn] += parse.wCoil[curWpn]
             # sounds
             atkSound.play()
+
+    # special melee dash attack
+    elif mouse[2] == 1 and meleeDashCD[0] <= 0 and mana[0] >= 20 and parse.wSpecial[curWpn] == "melee":
+        atkSound.play()
+        dashTarget = [mousePos[0], mousePos[1]]
+        meleeDashCD[0] = meleeDashCD[1]
+        mana[0] -= 20
+        manaChargeDelay[0] = manaChargeDelay[1]
+        # calculate angle and change in x and y
+        angle = (math.atan2(-(dashTarget[1] - posY), dashTarget[0] - posX))
+        meleeY = - math.sin(angle) * 15
+        meleeX = math.cos(angle) * 15
+
+    # dash forward
+    if meleeDashCD[0] >= meleeDashCD[1] - 10:
+        if not wall_collision(posX + meleeX, posY + meleeY, 16):
+            posX += meleeX
+            posY += meleeY
 
     # out of ammo sound
     elif mouse[0] == 1 and fireCD <= 0 and relCD[curWpn] > 0:
@@ -957,6 +988,11 @@ while True:
                 if j == gap - 1:
                     center = bulImg[i].get_rect()
                     screen.blit(bulImg[i], (bulX[i] - (center[2]/2), bulY[i] - (center[3]/2)))
+
+    if meleeAnimation > 0:
+        meleeAnimation -= 1 * timeSlow[0]
+        center = meleeImg.get_rect()
+        screen.blit(meleeImg, (posX - center[2] / 2, posY - center[3] / 2))
 
     # particle effects for bullets
     for i in range(20):

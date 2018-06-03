@@ -1,0 +1,237 @@
+save
+money 322
+
+# TODO: Add better sounds
+
+# MAIN PLAYER WEAPONS
+
+weapon
+Pistol
+damage 3
+volley 1
+fire_rate 3.5
+proj_speed 25
+ammo 12
+reload 1.5
+inaccuracy 2
+special none
+recoil 1.7
+image pistol
+bullet basic
+speed 1.0
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol hit
+cost 0
+owned 1
+end
+
+weapon
+Sub Machine Gun
+damage 2
+volley 1
+fire_rate 10.0
+proj_speed 25
+ammo 30
+reload 2.5
+inaccuracy 3.0
+recoil 0.7
+special none
+speed 0.9
+image smg
+bullet basic
+effect exp_small
+sound smg
+sound_death smg impact
+sound_hit smg hit
+cost 100
+owned 1
+end
+
+weapon
+Shotgun
+damage 1
+volley 10
+fire_rate 0.9
+proj_speed 20
+ammo 5
+reload 2.5
+inaccuracy 5.25
+recoil 3.0
+speed 0.9
+special
+image shotgun
+bullet shotgun bullet
+effect exp_pellet
+sound shotgun
+sound_death shotgun impact
+sound_hit shotgun hit
+cost 200
+owned 1
+end
+
+
+weapon
+Katana
+damage 5
+volley 1
+fire_rate 1.5
+proj_speed 0
+ammo -1
+reload 0
+inaccuracy 0.05
+recoil 0
+image katana
+bullet katana_slash
+special melee
+speed 1.0
+effect melee_strike
+sound katana
+sound_death none
+sound_hit katana hit
+cost 0
+owned 1
+end
+
+
+# EXPERIMENTAL / WIP WEAPONS
+weapon
+Sniper
+damage 3
+volley 5
+fire_rate 1.0
+proj_speed 35
+ammo 1
+reload 2.0
+inaccuracy 0.01
+special none
+recoil 2.5
+image sniper
+bullet sniper bullet
+speed 0.65
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol hit
+cost 0
+owned 1
+end
+
+
+# ENEMY WEAPONS BEGIN HERE
+
+weapon
+Enemy Pistol
+damage 2
+volley 1
+fire_rate 1.0
+proj_speed 12
+ammo -1
+reload 1
+inaccuracy 3.0
+recoil 0
+image pistol
+special none
+bullet basic_enemy
+speed 1.0
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol hit
+cost 9999
+owned 1
+end
+
+
+weapon
+Enemy SMG
+damage 1
+volley 1
+fire_rate 4.0
+proj_speed 12
+ammo -1
+reload 1
+inaccuracy 4.0
+special none
+recoil 0
+speed 1.0
+image smg
+bullet enemy_smg
+effect exp_small
+sound smg
+sound_death smg impact
+sound_hit smg hit
+cost 9999
+owned 0
+end
+
+weapon
+Enemy Shotgun
+damage 1
+volley 6
+fire_rate 0.75
+proj_speed 10
+ammo -1
+reload 1.0
+inaccuracy 10.0
+recoil 0
+special none
+speed 1.0
+image shotgun
+bullet shotgun bullet enemy
+effect exp_pellet
+sound shotgun
+sound_death shotgun impact
+sound_hit shotgun hit
+cost 9999
+owned 0
+end
+
+
+weapon
+Enemy Triple Cannon
+damage 2
+volley 3
+fire_rate 1.5
+proj_speed 10
+ammo -1
+reload 1
+inaccuracy 20.0
+recoil 0
+image pistol
+bullet basic_enemy
+speed 1.0
+special none
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol hit
+cost 9999
+owned 1
+end
+
+
+weapon
+Enemy Gamma Blaster
+damage 2
+volley 1
+fire_rate 5.5
+proj_speed 8
+ammo -1
+reload 1
+inaccuracy 17.0
+recoil 0
+image pistol
+bullet gamma_blast
+special phase
+speed 1.0
+effect exp_small
+sound pistol
+sound_death pistol impact
+sound_hit pistol hit
+cost 9999
+owned 1
+end
+
+

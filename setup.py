@@ -7,7 +7,7 @@ base = None
 executables = [Executable("main.py", base=base)]
 
 packages = ["idna", "parse", "pathfinder", "time", "math", "pygame", "sys", "random"]
-buildOptions = dict(include_files = ['effects/', 'enemy_pic/', 'powerup/', 'projectiles/', 'sounds/', 'ui/', 'weapons/', 'enemies', 'stats', 'player.png']) #folder,relative path. Use tuple like in the single file to set a absolute path.
+buildOptions = dict(include_files = ['effects/', 'enemy_pic/', 'powerup/', 'projectiles/', 'sounds/', 'ui/', 'weapons/', 'datafiles/', 'player.png']) #folder,relative path. Use tuple like in the single file to set a absolute path.
 
 
 options = {

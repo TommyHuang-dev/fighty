@@ -1,6 +1,6 @@
 import pygame
 
-# parses the file for weapons and shield stats in "open_file"
+# parses the file for weapons and shield weapons in "open_file"
 def parse_file(open_file):
     cur_line = open_file.readline()
     cur_wpn = 0
@@ -196,11 +196,11 @@ eBoss = []
 
 
 # get the entire file and read it
-saveFile = open("stats", "r")
-enemyFile = open("enemies", "r")
+saveFile = open("datafiles/weapons", "r")
+enemyFile = open("datafiles/enemies", "r")
 parse_file(saveFile)
 parse_enemy(enemyFile)
 
 
-# default stats
+# default weapons
 numWeapons = len(wName)

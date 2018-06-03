@@ -239,7 +239,7 @@ def main_menu():
 
 
 # calculates if the enemy is in a circle in front of the player
-# enemy x, enemy y, and enemy box are arrays of enemy stats
+# enemy x, enemy y, and enemy box are arrays of enemy weapons
 # returns which enemies were hit
 def calc_melee_hit(x, y, enemy_x, enemy_y, enemy_box, melee_box, angle):
     # draw two circles. If the enemy is in the front circle but not in the behind circle, return true
@@ -404,16 +404,16 @@ for i in range(len(parse.wEff)):
     parse.wEff[i] = load_pics("effects/", parse.wEff[i])
 
 # ENEMY STUFF
-# global stats
+# global weapons
 numEnemy = 6  # add more if needed!
 
-# individual stats
+# individual weapons
 for i in range(len(parse.eImg)):
     parse.eImg[i] = load_pics("enemy_pic/", parse.eImg[i])
 
 enemyReEvaluate = [0, 10]  # every 10 ticks re evaluate the path chosen
 
-# enemy stats
+# enemy weapons
 enemyHP = [parse.eHP[0]] * numEnemy
 enemyMaxHP = enemyHP * numEnemy  # used for the HP bar
 enemyImg = [parse.eImg[0]] * numEnemy
@@ -429,7 +429,7 @@ enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 enemyShootDelay = [30] * numEnemy  # ticks down, enemy shoots when it hits 0
 
-# stats for the enemy weapons
+# weapons for the enemy weapons
 enemyBulImg = [parse.wBul] * 30  # should probably add different pictures
 enemyEffImg = [expSmall] * 30
 enemyEffImg2 = [""] * 30
@@ -672,7 +672,7 @@ while deathTimer != 0:
             # gets the next dead enemy in list
             nextEnemy = enemyActive.index(False)
 
-            # reset stats
+            # reset weapons
             enemyHP[nextEnemy] = parse.eHP[selection]
             enemyMaxHP[nextEnemy] = enemyHP[nextEnemy] # used for the HP bar
             enemyImg[nextEnemy] = parse.eImg[selection]
@@ -723,7 +723,7 @@ while deathTimer != 0:
             # gets the next dead enemy in list
             nextEnemy = enemyActive.index(False)
 
-            # reset stats
+            # reset weapons
             enemyHP[nextEnemy] = parse.eHP[selection]
             enemyMaxHP[nextEnemy] = enemyHP[nextEnemy]  # used for the HP bar
             enemyImg[nextEnemy] = parse.eImg[selection]
@@ -922,7 +922,7 @@ while deathTimer != 0:
         if parse.wSpecial[curWpn] == "melee":
             atkSound.play()
             meleeAngle = (math.atan2(-(mousePos[1] - posY), mousePos[0] - posX))
-            meleeAnimation = 8
+            meleeAnimation = 6
             meleeImg = rot_center(parse.wBul[2], math.degrees(meleeAngle))
             enemiesHit = calc_melee_hit(posX, posY, enemyX, enemyY, enemyBox, 70, meleeAngle)
 

@@ -1,0 +1,85 @@
+save
+
+# used enemies
+
+enemy
+basic
+health 8
+weapon Enemy Pistol
+img enemy_basic
+hitbox 36
+frequency 10
+movespeed 2.5
+score 10
+boss 0
+end
+
+enemy
+speedy
+health 5
+weapon Enemy Pistol
+img enemy_light
+hitbox 32
+frequency 3
+movespeed 4.0
+score 15
+boss 0
+end
+
+enemy
+heavy
+health 15
+weapon Enemy SMG
+img enemy_heavy
+hitbox 40
+frequency 3
+movespeed 1.5
+score 20
+boss 0
+end
+
+# basically a miniboss
+enemy
+assault
+health 20
+weapon Enemy Shotgun
+img enemy_assault
+hitbox 44
+frequency 0
+movespeed 2.0
+score 25
+boss 0
+end
+
+
+# basic boss
+enemy
+tank boss
+health 80
+weapon Enemy Triple Cannon
+img enemy_tank_boss
+hitbox 50
+frequency 10
+movespeed 1.0
+score 100
+boss 1
+end
+
+enemy
+ghost boss
+health 60
+weapon Enemy Gamma Blaster
+img enemy_ghost_boss
+hitbox 50
+frequency 8
+movespeed 1.75
+score 100
+boss 1
+end
+
+# WIP enemies
+
+
+
+# BOSSES
+

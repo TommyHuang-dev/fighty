@@ -63,6 +63,10 @@ def parse_file(open_file):
                 cur_line = ' '.join(map(str, cur_line))  # joins all words together
                 wBul.append("")
                 wBul[cur_wpn] = cur_line[7:]
+            elif cur_line[0] == "special":
+                cur_line = ' '.join(map(str, cur_line))  # joins all words together
+                wSpecial.append("")
+                wSpecial[cur_wpn] = cur_line[8:]
             elif cur_line[0] == "effect":
                 cur_line = ' '.join(map(str, cur_line))  # joins all words together
                 wEff.append("")
@@ -169,6 +173,7 @@ wCoil = []
 wImg = []
 wBul = []
 wSpeed = []
+wSpecial = []
 wEff = []
 wEff2 = []
 wSound = []

@@ -71,7 +71,7 @@ health 60
 weapon Enemy Gamma Blaster
 img enemy_ghost_boss
 hitbox 50
-frequency 8
+frequency 5
 movespeed 1.75
 score 100
 boss 1

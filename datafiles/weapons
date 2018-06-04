@@ -9,13 +9,13 @@ weapon
 Pistol
 damage 3
 volley 1
-fire_rate 3.5
+fire_rate 4.0
 proj_speed 25
-ammo 12
+ammo 10
 reload 1.5
 inaccuracy 2
 special none
-recoil 1.7
+recoil 1.6
 image pistol
 bullet basic
 speed 1.0
@@ -67,16 +67,15 @@ effect exp_pellet
 sound shotgun
 sound_death shotgun impact
 sound_hit shotgun hit
-cost 200
+cost 100
 owned 1
 end
-
 
 weapon
 Katana
 damage 5
 volley 1
-fire_rate 1.5
+fire_rate 1.6
 proj_speed 0
 ammo -1
 reload 0
@@ -96,16 +95,17 @@ end
 
 
 # EXPERIMENTAL / WIP WEAPONS
+
 weapon
 Sniper
-damage 3
-volley 5
+damage 2
+volley 8
 fire_rate 1.0
-proj_speed 35
+proj_speed 40
 ammo 1
 reload 2.0
 inaccuracy 0.01
-special none
+special laser
 recoil 2.5
 image sniper
 bullet sniper bullet
@@ -114,7 +114,7 @@ effect exp_small
 sound pistol
 sound_death pistol impact
 sound_hit pistol hit
-cost 0
+cost 300
 owned 1
 end
 

@@ -38,6 +38,7 @@ def grid_location(x, y):
     # x
     loc[0] = int((x - 100)//75)
     loc[1] = int(y//75)
+
     if loc[0] > 11:
         loc[0] = 11
     elif loc[0] < 0:
@@ -73,16 +74,19 @@ def rot_center(image, angle):
     return rot_sprite
 
 
-def draw_crosshair(cX, cY, dis, inAcc):
+def draw_crosshair(cX, cY, dis, inAcc, curwpn):
     # more spacing = more inaccurate
     spacing = dis / 55 * inAcc + 3
     # right, left, up, down
     if relCD[curWpn] <= 0:
-        pygame.draw.circle(screen, crossCol, (cX, cY), 3)
-        pygame.draw.line(screen, crossCol, (cX + spacing - 1, cY), (cX + spacing + 3, cY))
-        pygame.draw.line(screen, crossCol, (cX - spacing, cY), (cX - spacing - 3, cY))
-        pygame.draw.line(screen, crossCol, (cX, cY - spacing), (cX, cY - spacing - 3))
-        pygame.draw.line(screen, crossCol, (cX, cY + spacing - 1), (cX, cY + spacing + 3))
+        if curwpn == 2:
+            pygame.draw.circle(screen, crossCol, (cX, cY), 8, 3)
+        else:
+            pygame.draw.circle(screen, crossCol, (cX, cY), 3)
+            pygame.draw.line(screen, crossCol, (cX + spacing - 1, cY), (cX + spacing + 3, cY))
+            pygame.draw.line(screen, crossCol, (cX - spacing, cY), (cX - spacing - 3, cY))
+            pygame.draw.line(screen, crossCol, (cX, cY - spacing), (cX, cY - spacing - 3))
+            pygame.draw.line(screen, crossCol, (cX, cY + spacing - 1), (cX, cY + spacing + 3))
 
     else:  # draw an X during reload
         pygame.draw.line(screen, crossCol, (cX - 10, cY - 10), (cX + 10, cY + 10))
@@ -335,6 +339,7 @@ level = 0
 levelTimer = 1200  # increase level every 20 or 30sec
 timeBuffer = [0, 20]  # used so that pressing space doesn't accidentally do it 2 times
 timeSlow = [1.0, 1.0]  # self slow, enemy slow
+score = 0
 
 bossMode = False
 bossSpawnDelay = -6
@@ -362,8 +367,10 @@ curWpn = 0
 speed = baseSpeed * parse.wSpeed[curWpn]  # this changes based on the weapon
 atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 
-# for aias
+# for ai
 gridLoc = [0, 0]
+
+# death red screen
 deathTimer = -2
 deathImg = load_pics("ui/", "redscreen")
 
@@ -371,20 +378,20 @@ deathImg = load_pics("ui/", "redscreen")
 expSmall = pygame.image.load("effects/exp_small.png").convert_alpha()
 
 # player bullet variables
-bulImg = [parse.wBul] * 20  # should probably add different pictures
-effImg = [expSmall] * 20
-effImg2 = [""] * 20
-bulX = [-50.0] * 20
-bulY = [-50.0] * 20
-active = [0] * 20
-bulDmg = [0] * 20
-bulProj = [0.0] * 20
-bulTarX = [-50.0] * 20
-bulTarY = [-50.0] * 20
-bulAng = [0.0] * 20
-bulSpec = ["none"] * 20
-bulExpSound = [parse.wExpSound[curWpn]] * 20
-bulHitSound = [parse.wHitSound[curWpn]] * 20
+bulImg = [parse.wBul] * 30  # should probably add different pictures
+effImg = [expSmall] * 30
+effImg2 = [""] * 30
+bulX = [-50.0] * 30
+bulY = [-50.0] * 30
+active = [0] * 30
+bulDmg = [0] * 30
+bulProj = [0.0] * 30
+bulTarX = [-50.0] * 30
+bulTarY = [-50.0] * 30
+bulAng = [0.0] * 30
+bulSpec = ["none"] * 30
+bulExpSound = [parse.wExpSound[curWpn]] * 30
+bulHitSound = [parse.wHitSound[curWpn]] * 30
 curBul = 0
 
 outOfAmmoSound = pygame.mixer.Sound('sounds/noammo.wav')
@@ -411,7 +418,7 @@ numEnemy = 6  # add more if needed!
 for i in range(len(parse.eImg)):
     parse.eImg[i] = load_pics("enemy_pic/", parse.eImg[i])
 
-enemyReEvaluate = [0, 10]  # every 10 ticks re evaluate the path chosen
+enemyReEvaluate = [0, 5]  # every 5 ticks re evaluate the path chosen
 
 # enemy weapons
 enemyHP = [parse.eHP[0]] * numEnemy
@@ -428,6 +435,7 @@ enemyNextTar = [[0, 0]] * numEnemy  # which x, y direction enemy should move to 
 enemyPath = [[]] * numEnemy
 enemyActive = [False] * numEnemy
 enemyShootDelay = [30] * numEnemy  # ticks down, enemy shoots when it hits 0
+enemyScore = [0] * numEnemy
 
 # weapons for the enemy weapons
 enemyBulImg = [parse.wBul] * 30  # should probably add different pictures
@@ -520,15 +528,18 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 meleeAnimation = 0
 meleeAngle = 0
 meleeImg = parse.wBul[2]
-meleeDashCD = [0, 120]
+meleeDashCD = [0, 120]  # base, dash max cd
 dashAlreadyHit = []  # list of enemies already hit
 dashAngle = 0
+dashSpeed = 20  # constant
+dashImg = load_pics("projectiles/", parse.wName[2] + "_dash")
 # the change in x and y when dashing
 meleeX = 0
 meleeY = 0
 dashTarget = [-50, -50]
 dummyBullets = load_pics("projectiles/", "dummy")
 
+# ========= MAIN LOOP =========
 while deathTimer != 0:
     screen.fill(backCol)
 
@@ -564,10 +575,7 @@ while deathTimer != 0:
     # handle reloading
     for i in range(2):
         if relCD[i] > 0 and curWpn == i:
-            if powerupType == "doubleAttackSpeed" and activePowerup > 0:
-                relCD[i] += -2 * timeSlow[0]
-            else:
-                relCD[i] += -1 * timeSlow[0]
+            relCD[i] += -1 * timeSlow[0]
         elif relCD[i] > 0 and curWpn != i:
             relCD[i] = parse.wRel[i] * 60
         if -2 <= relCD[i] <= 0:
@@ -604,7 +612,7 @@ while deathTimer != 0:
         if powerupSpawnRNG == 1:
             powerupType = "health"
         elif powerupSpawnRNG == 2:
-            powerupType = "doubleAttackSpeed"
+            powerupType = "ammoPack"
         spawnSound.play()
 
     # collect a powerup
@@ -623,9 +631,12 @@ while deathTimer != 0:
             if health[0] > health[1]:
                 health[0] = health[1]
 
-        # double attack speed for 8 sec and makes reloading faster
-        elif powerupType == "doubleAttackSpeed":
+        # increase attack speed for 8 sec and makes guns have inf. ammo
+        elif powerupType == "ammoPack":
             activePowerup = 480
+            for i in range(3):
+                relCD[i] = -4
+                wpnAmmo[i] = -1
             # play sound [soon tm]
             pickupAtkSpd.play()
 
@@ -638,15 +649,18 @@ while deathTimer != 0:
     if powerupCD <= 0:
         if powerupType == "health":
             screen.blit(healthPack, (powerupCoords[0] - healthPack.get_rect()[3] / 2, powerupCoords[1] - healthPack.get_rect()[3] / 2))
-        elif powerupType == "doubleAttackSpeed":
+        elif powerupType == "ammoPack":
             screen.blit(attackspeedPack, (powerupCoords[0] - attackspeedPack.get_rect()[3] / 2,
                                           powerupCoords[1] - attackspeedPack.get_rect()[3] / 2))
 
     # do the effects of powerups
-    if activePowerup > 0 and powerupType == "doubleAttackSpeed":
-        fireCD -= 1 * timeSlow[0]  # tick it down AGAIN!!
+    if activePowerup > 0 and powerupType == "ammoPack":
+        fireCD -= 1 * timeSlow[0] / 2  # tick it down AGAIN!! by half
         # draw a yellow aura around the player
         draw_aura((200, 200, 90), 24, 8)
+    if -2 <= activePowerup <= 0 and powerupType == "ammoPack":
+        for i in range(3):
+            wpnAmmo[i] = parse.wAmmo[i]
 
     # ------------ ENEMY STUFF ------------ #
 
@@ -655,7 +669,7 @@ while deathTimer != 0:
     if enemySpawn <= 0 and bossSpawnDelay < -5:
         # lower spawn rates if lots of enemies already there
         numEnemyAlive = enemyActive.count(True)
-        enemySpawn = random.randint(100, 150) + (numEnemyAlive * random.randint(12, 16))
+        enemySpawn = random.randint(90, 180) + (numEnemyAlive * random.randint(10, 20))
         if numEnemyAlive < numEnemy:
             # this spawns a random enemy by first rolling random number from 1 to 10
             # NOTE: REQUIRES AT LEAST ONE ENEMY TO HAVE 10 FREQUENCY
@@ -679,6 +693,7 @@ while deathTimer != 0:
             enemyBox[nextEnemy] = parse.eBox[selection]
             enemySpeed[nextEnemy] = parse.eSpeed[selection]
             enemyIsBoss[nextEnemy] = False
+            enemyScore[nextEnemy] = parse.eScore[selection]
             # equip gun
             enemyWpnIndex[nextEnemy] = parse.wName.index(parse.eWpn[selection])
             enemyShootDelay[nextEnemy] = 60 / parse.wRate[enemyWpnIndex[nextEnemy]] * random.uniform(1, 1.5)  # add a bit of unpredictability
@@ -693,16 +708,18 @@ while deathTimer != 0:
                 enemyY[nextEnemy] = disHeight - 75 - 37
 
             enemyActive[nextEnemy] = True
-            # triple spawn delay if there is a boss
+            # increase spawn delay if there is a boss
             if bossMode:
-                enemySpawn *= 3
+                enemySpawn *= 1.5
+                enemySpawn += 100
 
             # roll for a boss every x enemies
             if random.randint(1, bossRarity) == 1 and bossMinSeparation <= 0 and not bossMode:
                 bossMode = True
                 bossSpawnDelay = 300
-                enemySpawn += 400
+                enemySpawn += 450
                 alertSound.play()
+
 
     elif bossMode and -2 <= bossSpawnDelay <= 0:
         bossSpawnDelay -= 6
@@ -724,11 +741,12 @@ while deathTimer != 0:
             nextEnemy = enemyActive.index(False)
 
             # reset weapons
-            enemyHP[nextEnemy] = parse.eHP[selection]
-            enemyMaxHP[nextEnemy] = enemyHP[nextEnemy]  # used for the HP bar
+            enemyHP[nextEnemy] = parse.eHP[selection] * (1 + level * 0.05)  # bosses gain 5% more hp every level
+            enemyMaxHP[nextEnemy] = enemyHP[nextEnemy]
             enemyImg[nextEnemy] = parse.eImg[selection]
             enemyBox[nextEnemy] = parse.eBox[selection]
             enemySpeed[nextEnemy] = parse.eSpeed[selection]
+            enemyScore[nextEnemy] = parse.eScore[selection]
             enemyIsBoss[nextEnemy] = True
             # equip gun
             enemyWpnIndex[nextEnemy] = parse.wName.index(parse.eWpn[selection])
@@ -750,15 +768,15 @@ while deathTimer != 0:
     if enemyReEvaluate[0] <= 0:
         gridLoc = grid_location(posX, posY)
 
-        # reset the delay, checks once per 0.5s
         enemyReEvaluate[0] = int(enemyReEvaluate[1] * random.uniform(0.5, 1.0))
         # loop through all of the enemies and get da paths
         for i in range(numEnemy):
-            if enemyActive[i]:
-                enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
-                #print("loc:", enemyGridLoc)
-                enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
-                #print("path:", enemyPath)
+            if 40 < (enemyX[i] + 50) % 75 < 60 and 0 < (enemyY[i] + 50) % 75 < 20 or enemyX[i] > disLength:
+                if enemyActive[i]:
+                    enemyGridLoc[i] = grid_location(enemyX[i], enemyY[i])
+                    # print("loc:", enemyGridLoc)
+                    enemyPath[i] = ai.find_path(wallGrid, enemyGridLoc[i], gridLoc)
+                    # print("path:", enemyPath)
 
     # enemy movement
     for i in range(numEnemy):
@@ -803,7 +821,8 @@ while deathTimer != 0:
     for i in range(30):
         if enemyBulActive[i] > 0:
             # check if the bullet hits a wall or enemy, else display it
-            gap = int(math.sqrt(enemyBulTarX[i] ** 2 + enemyBulTarY[i] ** 2)) // 8 + 1  # number of times to check for collision
+            # number of times to check for collision
+            gap = int(math.sqrt(enemyBulTarX[i] ** 2 + enemyBulTarY[i] ** 2)) // 8 + 1
             for j in range(gap):
                 # check if the bullet hits a wall or player
                 # returns 1 if hit player, 0 if it did not
@@ -827,7 +846,8 @@ while deathTimer != 0:
                     enemyBulActive[i] = -1
                     # change picture to explosion!!!
                     enemyBulImg[i] = enemyEffImg[i]
-                    if meleeDashCD[0] > meleeDashCD[1] - 10:
+                    # invincibility frames if there was a recent dash
+                    if meleeDashCD[0] > meleeDashCD[1] - 11:
                         enemyBulExpSound[i].play()
                     else:
                         enemyBulHitSound[i].play()
@@ -908,8 +928,9 @@ while deathTimer != 0:
     mouse = pygame.mouse.get_pressed()
 
     # manual reload
-    if pressed[pygame.K_r] and wpnAmmo[curWpn] < parse.wAmmo[curWpn] and relCD[curWpn] <= 0:
+    if pressed[pygame.K_r] and -1 < wpnAmmo[curWpn] < parse.wAmmo[curWpn] and relCD[curWpn] <= 0:
         relCD[curWpn] = parse.wRel[curWpn] * 60
+
     # shoot
     if mouse[0] == 1 and fireCD <= 0 and relCD[curWpn] <= 0:
         # set cooldown and automatic reload
@@ -922,40 +943,45 @@ while deathTimer != 0:
         if parse.wSpecial[curWpn] == "melee":
             atkSound.play()
             meleeAngle = (math.atan2(-(mousePos[1] - posY), mousePos[0] - posX))
-            meleeAnimation = 6
+            meleeAnimation = 5
             meleeImg = rot_center(parse.wBul[2], math.degrees(meleeAngle))
-            enemiesHit = calc_melee_hit(posX, posY, enemyX, enemyY, enemyBox, 70, meleeAngle)
+            enemiesHit = calc_melee_hit(posX, posY, enemyX, enemyY, enemyBox, 85, meleeAngle)
 
             for i in range(len(enemiesHit)):
-                # spawn dummy bullets there for effect
-                curBul += 1
-                if curBul >= 20:
-                    curBul = 0
-                bulX[curBul] = enemyX[enemiesHit[i]]
-                bulY[curBul] = enemyY[enemiesHit[i]]
-                active[curBul] = -1
-                bulImg[curBul] = parse.wEff[curWpn]
-                effImg2[curBul] = parse.wEff2[curWpn]
-                bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
-                bulHitSound[curBul].play()
+                if enemyActive[enemiesHit[i]]:
+                    # spawn dummy bullets there for effect
+                    curBul += 1
+                    if curBul >= 30:
+                        curBul = 0
+                    bulX[curBul] = enemyX[enemiesHit[i]]
+                    bulY[curBul] = enemyY[enemiesHit[i]]
+                    active[curBul] = -1
+                    bulImg[curBul] = parse.wEff[curWpn]
+                    effImg2[curBul] = parse.wEff2[curWpn]
+                    bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
+                    bulHitSound[curBul].play()
 
-                # do damage to enemies
-                enemyHP[enemiesHit[i]] -= parse.wDmg[curWpn]
-                if enemyHP[enemiesHit[i]] <= 0:
-                    enemyActive[enemiesHit[i]] = False
-                    enemyX[enemiesHit[i]] = disLength + 25
-                    enemyY[enemiesHit[i]] = 75 + 37
-                    if enemyIsBoss[enemiesHit[i]]:
-                        bossMode = False
-                        bossMinSeparation = 10
-                    elif not bossMode:
-                        bossMinSeparation -= 1
+                    # do damage to enemies, bosses take 2x damage from melee
+                    #if enemyIsBoss[enemiesHit[i]]:
+                        #enemyHP[enemiesHit[i]] -= parse.wDmg[curWpn] * 2
+                    #else:
+                    enemyHP[enemiesHit[i]] -= parse.wDmg[curWpn]
+                    if enemyHP[enemiesHit[i]] <= 0:
+                        enemyActive[enemiesHit[i]] = False
+                        score += enemyScore[enemiesHit[i]]
+                        enemyX[enemiesHit[i]] = disLength + 25
+                        enemyY[enemiesHit[i]] = 75 + 37
+                        if enemyIsBoss[enemiesHit[i]]:
+                            bossMode = False
+                            bossMinSeparation = 10
+                        elif not bossMode:
+                            bossMinSeparation -= 1
 
         # randomize every bullet in the volley
         else:
             for i in range(parse.wVol[curWpn]):
                 curBul += 1
-                if curBul >= 20:
+                if curBul >= 30:
                     curBul = 0
                 # set some bullet variables
                 bulX[curBul] = posX
@@ -979,8 +1005,14 @@ while deathTimer != 0:
             # sounds
             atkSound.play()
 
+    # draw melee attack
+    if meleeAnimation > 0:
+        meleeAnimation -= 1 * timeSlow[0]
+        center = meleeImg.get_rect()
+        screen.blit(meleeImg, (posX - center[2] / 2, posY - center[3] / 2))
+
     # special melee dash attacks
-    elif mouse[2] == 1 and meleeDashCD[0] <= 0 and parse.wSpecial[curWpn] == "melee":
+    elif mouse[2] == 1 and meleeDashCD[0] <= 0 and parse.wSpecial[curWpn] == "melee" and meleeAnimation <= 0:
         # play sounds, set target and cd
         atkSound.play()
         dashTarget = [mousePos[0], mousePos[1]]
@@ -988,13 +1020,15 @@ while deathTimer != 0:
         # calculate angle and change in x and y
         dashAngle = (math.atan2(-(dashTarget[1] - posY), dashTarget[0] - posX))
         dashAlreadyHit = []
-        meleeY = - math.sin(dashAngle) * 20
-        meleeX = math.cos(dashAngle) * 20
+        dashImgRotated = rot_center(dashImg, math.degrees(dashAngle))
+        meleeY = - math.sin(dashAngle) * dashSpeed
+        meleeX = math.cos(dashAngle) * dashSpeed
         if fireCD < 20:
             fireCD = 20
 
     # dash forward
     if meleeDashCD[0] >= meleeDashCD[1] - 10:
+        # make sure you dont bump into wall, move character otherwise
         if not wall_collision(posX + meleeX / 2, posY + meleeY / 2, 16):
             posX += meleeX / 2 * timeSlow[0]
             posY += meleeY / 2 * timeSlow[0]
@@ -1002,11 +1036,14 @@ while deathTimer != 0:
         if not wall_collision(posX + meleeX / 2, posY + meleeY / 2, 16):
             posX += meleeX / 2 * timeSlow[0]
             posY += meleeY / 2 * timeSlow[0]
+        # display a little wave while dashing
+        dCenter = dashImgRotated.get_rect()
+        screen.blit(dashImgRotated, (posX - dCenter[2] / 2, posY - dCenter[3] / 2))
         for i in range(len(enemiesHit)):
-            if enemiesHit[i] not in dashAlreadyHit:
+            if enemiesHit[i] not in dashAlreadyHit and enemyActive[enemiesHit[i]]:
                 # spawn dummy bullets there for effect
                 curBul += 1
-                if curBul >= 20:
+                if curBul >= 30:
                     curBul = 0
                 bulX[curBul] = enemyX[enemiesHit[i]]
                 bulY[curBul] = enemyY[enemiesHit[i]]
@@ -1016,10 +1053,15 @@ while deathTimer != 0:
                 bulHitSound[curBul] = pygame.mixer.Sound(parse.wHitSound[curWpn])
                 bulHitSound[curBul].play()
                 dashAlreadyHit.append(enemiesHit[i])
-                # do damage to enemies
+
+                # do damage to enemies, bosses take 2x dmg from melee weapons3
+                #if enemyIsBoss[enemiesHit[i]]:
+                    #enemyHP[enemiesHit[i]] -= 2 * parse.wDmg[2]
+                #else:
                 enemyHP[enemiesHit[i]] -= parse.wDmg[2]
                 if enemyHP[enemiesHit[i]] <= 0:
                     enemyActive[enemiesHit[i]] = False
+                    score += enemyScore[i]
                     enemyX[enemiesHit[i]] = disLength + 25
                     enemyY[enemiesHit[i]] = 75 + 37
                     if enemyIsBoss[enemiesHit[i]]:
@@ -1036,7 +1078,7 @@ while deathTimer != 0:
             fireCD = relCD[curWpn]
 
     # displaying and resetting bullets
-    for i in range(20):
+    for i in range(30):
         if active[i] > 0:
             # check if the bullet hits a wall or enemy, else display it
             gap = int(math.sqrt(bulTarX[i] ** 2 + bulTarY[i] ** 2)) // 8 + 1  # number of times to check for collision
@@ -1062,6 +1104,7 @@ while deathTimer != 0:
                         enemyActive[enemyCheck] = False
                         enemyX[enemyCheck] = disLength + 25
                         enemyY[enemyCheck] = 75 + 37
+                        score += enemyScore[enemyCheck]
                         if enemyIsBoss[enemyCheck]:
                             bossMode = False
                             bossMinSeparation = 10
@@ -1083,13 +1126,8 @@ while deathTimer != 0:
                     center = bulImg[i].get_rect()
                     screen.blit(bulImg[i], (bulX[i] - (center[2]/2), bulY[i] - (center[3]/2)))
 
-    if meleeAnimation > 0:
-        meleeAnimation -= 1 * timeSlow[0]
-        center = meleeImg.get_rect()
-        screen.blit(meleeImg, (posX - center[2] / 2, posY - center[3] / 2))
-
     # particle effects for bullets
-    for i in range(20):
+    for i in range(30):
         if -15 <= active[i] < 0:
             screen.blit(bulImg[i], (bulX[i] - 45, bulY[i] - 45))
             active[i] += -1 * timeSlow[0]
@@ -1106,7 +1144,7 @@ while deathTimer != 0:
 
     # draw bullets on top of walls if they are phased
     if "phase" in bulSpec:
-        for i in range(20):
+        for i in range(30):
             if bulSpec[i] == "phase" and active[i] > 0:
                 center = bulImg[i].get_rect()
                 screen.blit(bulImg[i], (bulX[i] - (center[2] / 2), bulY[i] - (center[3] / 2)))
@@ -1129,7 +1167,7 @@ while deathTimer != 0:
 
     # draw crosshair
     dist = math.sqrt((mousePos[0] - posX) ** 2 + (mousePos[1] - posY) ** 2)
-    draw_crosshair(mousePos[0], mousePos[1], dist, wpnInAcc[curWpn])
+    draw_crosshair(mousePos[0], mousePos[1], dist, wpnInAcc[curWpn], curWpn)
 
     # draw UI for slow and not slowed time
     if timeSlow[0] != 1 or timeSlow[1] != 1:
@@ -1157,12 +1195,15 @@ while deathTimer != 0:
     if -2 < changeAnimation < 2:
         changeAnimation = 0
 
+    # score
+    score_text = msgFont.render(str(score), False, (25, 150, 25))
+    screen.blit(score_text, (disLength - 30 - len(str(score)) * 10, 25))
     # make screen red when dying
     if deathTimer > 0:
         timeSlow = [0.1, 0.1]
         screen.blit(deathImg, (-25, -25))
 
-    # update display!
+    # update display!a
     pygame.display.update()
 
     # should make it 60FPS max

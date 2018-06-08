@@ -75,7 +75,7 @@ weapon
 Katana
 damage 5
 volley 1
-fire_rate 2.0
+fire_rate 1.6
 proj_speed 0
 ammo -1
 reload 0
@@ -100,7 +100,7 @@ weapon
 Sniper
 damage 2
 volley 8
-fire_rate 0.6667
+fire_rate 1.0
 proj_speed 40
 ammo 1
 reload 2.0
@@ -117,30 +117,6 @@ sound_hit pistol hit
 cost 300
 owned 1
 end
-
-
-weapon
-Lightsabre
-damage 8
-volley 1
-fire_rate 1.5
-proj_speed 0
-ammo -1
-reload 0
-inaccuracy 0.05
-recoil 0
-image katana
-bullet katana_slash
-special melee deflect
-speed 0.9
-effect melee_strike
-sound katana
-sound_death none
-sound_hit katana hit
-cost 0
-owned 1
-end
-
 
 
 # ENEMY WEAPONS BEGIN HERE
@@ -211,29 +187,6 @@ sound_hit shotgun hit
 cost 9999
 owned 0
 end
-
-weapon
-Enemy Sniper
-damage 3
-volley 1
-fire_rate 0.3333
-proj_speed 25
-ammo -1
-reload 1.0
-inaccuracy 0.2
-special laser
-recoil 0
-image sniper
-bullet sniper bullet
-speed 1.0
-effect exp_small
-sound pistol
-sound_death pistol impact
-sound_hit pistol hit
-cost 9999
-owned 1
-end
-
 
 
 weapon

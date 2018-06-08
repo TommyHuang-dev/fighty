@@ -72,24 +72,13 @@ weapon Enemy Gamma Blaster
 img enemy_ghost_boss
 hitbox 50
 frequency 5
-movespeed 2.0
+movespeed 1.75
 score 100
 boss 1
 end
 
-
 # WIP enemies
-enemy
-sniper
-health 12
-weapon Enemy Sniper
-img enemy_light
-hitbox 32
-frequency -3
-movespeed 1.0
-score 30
-boss 0
-end
+
 
 
 # BOSSES

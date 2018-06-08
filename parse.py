@@ -136,6 +136,9 @@ def parse_enemy(open_file):
             elif cur_line[0] == "frequency":
                 eFreq.append("")
                 eFreq[cur_enemy] = (int(cur_line[1]))
+            elif cur_line[0] == "score":
+                eScore.append("")
+                eScore[cur_enemy] = (int(cur_line[1]))
             elif cur_line[0] == "movespeed":
                 eSpeed.append("")
                 eSpeed[cur_enemy] = (float(cur_line[1]))
@@ -193,6 +196,7 @@ eBox = []
 eFreq = []
 eSpeed = []
 eBoss = []
+eScore = []
 
 
 # get the entire file and read it

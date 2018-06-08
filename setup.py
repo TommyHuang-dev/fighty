@@ -6,8 +6,8 @@ os.environ['TK_LIBRARY'] = "C:\\Python\\tcl\\tk8.6"
 base = None
 executables = [Executable("main.py", base=base)]
 
-packages = ["idna", "parse", "pathfinder", "time", "math", "pygame", "sys", "random"]
-buildOptions = dict(include_files = ['effects/', 'enemy_pic/', 'powerup/', 'projectiles/', 'sounds/', 'ui/', 'weapons/', 'datafiles/', 'player.png']) #folder,relative path. Use tuple like in the single file to set a absolute path.
+packages = ["idna", "parse", "time", "math", "pygame", "sys", "random"]
+buildOptions = dict(include_files = ['effects/', 'enemy_pic/', 'powerup/', 'projectiles/', 'sounds/', 'ui/', 'weapons/', 'datafiles/', 'player.png', 'pathfinder/']) #folder,relative path. Use tuple like in the single file to set a absolute path.
 
 
 options = {
@@ -17,9 +17,9 @@ options = {
 }
 
 setup(
-         name = "appname",
+         name = "shooty",
          version = "1.0",
-         description = "description",
+         description = "shooty",
          author = "your name",
          options = dict(build_exe = buildOptions),
          executables = executables)

@@ -104,7 +104,7 @@ fire_rate 0.6667
 proj_speed 40
 ammo 1
 reload 2.0
-inaccuracy 0.01
+inaccuracy 0.00001
 special laser
 recoil 2.5
 image sniper

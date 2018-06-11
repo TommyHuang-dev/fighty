@@ -485,7 +485,7 @@ changeAnimation = 0
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP)
 # Shotgun, Sub Machine Gun, Pistol, Katana. A melee weapon should always be the 3rd weapon
-EqWpnName = ["Shotgun", "Pistol", "Katana"]  # the 2 weapons used
+EqWpnName = ["Sniper", "Pistol", "Katana"]  # the 2 weapons used
 
 for i in range(2, -1, -1):
     if EqWpnName[i] in parse.wName:
@@ -1137,6 +1137,22 @@ while deathTimer != 0:
             active[i] += -1
         elif -6.5 <= active[i] < -5.5:
             active[i] = -16
+
+    # draw a red line for weapons with laser special
+    if parse.wSpecial[curWpn] == "laser" and relCD[curWpn] <= 0:
+        aimAngle = (math.atan2(-(mousePos[1] - posY), mousePos[0] - posX))
+        deltaY = - math.sin(aimAngle) * 10
+        deltaX = math.cos(aimAngle) * 10
+        aimY = posY
+        aimX = posX
+        # keep going by 10 until a wall is hit
+        for i in range(105):
+            if not wall_collision(aimX, aimY, 3):
+                aimX += deltaX
+                aimY += deltaY
+
+        pygame.draw.line(screen, (255, 25, 25), (posX + deltaX, posY + deltaY), (aimX, aimY))
+
 
     # ------------ UI ELEMENTS ------------ #
     # draw walls and stuff

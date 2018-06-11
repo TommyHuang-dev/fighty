@@ -83,9 +83,9 @@ enemy
 sniper
 health 12
 weapon Enemy Sniper
-img enemy_light
+img enemy_sniper
 hitbox 32
-frequency -3
+frequency -5
 movespeed 1.0
 score 30
 boss 0

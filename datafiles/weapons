@@ -106,14 +106,14 @@ ammo 1
 reload 2.0
 inaccuracy 0.00001
 special laser
-recoil 2.5
+recoil 3.5
 image sniper
 bullet sniper bullet
 speed 0.65
 effect exp_small
-sound pistol
-sound_death pistol impact
-sound_hit pistol hit
+sound sniper
+sound_death sniper impact
+sound_hit sniper hit
 cost 300
 owned 1
 end

@@ -1147,7 +1147,7 @@ while deathTimer != 0:
         aimX = posX
         # keep going by 10 until a wall is hit
         for i in range(105):
-            if not wall_collision(aimX, aimY, 3):
+            if not wall_collision(aimX, aimY, 3) and 80 < aimX < disLength + 20 and -20 < aimY < disHeight + 20:
                 aimX += deltaX
                 aimY += deltaY
 

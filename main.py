@@ -399,7 +399,7 @@ outOfAmmoSound = pygame.mixer.Sound('sounds/noammo.wav')
 # 2nd frame of effects (optional)
 for i in range(len(parse.wEff)):
     try:
-        parse.wEff2.append(load_pics("effects/", "1" + parse.wEff[i]))
+        parse.wEff2.append(load_pics("effects/", parse.wEff[i]))
     except pygame.error:
         parse.wEff2.append("")
 # weapon sprites and effects
@@ -485,7 +485,7 @@ changeAnimation = 0
 # ========= GAME LOGIC ========= #
 # LIST OF ALL WEAPONS (not including WIP)
 # Shotgun, Sub Machine Gun, Pistol, Katana. A melee weapon should always be the 3rd weapon
-EqWpnName = ["Sniper", "Pistol", "Katana"]  # the 2 weapons used
+EqWpnName = ["Shotgun", "Pistol", "Katana"]  # the 2 weapons used
 
 for i in range(2, -1, -1):
     if EqWpnName[i] in parse.wName:

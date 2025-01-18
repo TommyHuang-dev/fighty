@@ -10,10 +10,10 @@ Pistol
 damage 3
 volley 1
 fire_rate 4.0
-proj_speed 25
-ammo 10
-reload 1.5
-inaccuracy 2
+proj_speed 30
+ammo 12
+reload 1.2
+inaccuracy 1.5
 special none
 recoil 1.6
 image pistol
@@ -32,7 +32,7 @@ Sub Machine Gun
 damage 2
 volley 1
 fire_rate 10.0
-proj_speed 25
+proj_speed 30
 ammo 30
 reload 2.5
 inaccuracy 3.0
@@ -52,12 +52,12 @@ end
 weapon
 Shotgun
 damage 1
-volley 10
-fire_rate 0.9
-proj_speed 20
+volley 16
+fire_rate 0.8
+proj_speed 25
 ammo 5
 reload 2.5
-inaccuracy 5.25
+inaccuracy 5.5
 recoil 3.0
 speed 0.9
 special
@@ -75,7 +75,7 @@ weapon
 Katana
 damage 5
 volley 1
-fire_rate 2.0
+fire_rate 2.5
 proj_speed 0
 ammo -1
 reload 0

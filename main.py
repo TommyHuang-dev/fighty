@@ -528,7 +528,7 @@ atkSound = pygame.mixer.Sound(parse.wSound[curWpn])
 meleeAnimation = 0
 meleeAngle = 0
 meleeImg = parse.wBul[2]
-meleeDashCD = [0, 120]  # base, dash max cd
+meleeDashCD = [0, 100]  # base, dash max cd
 dashAlreadyHit = []  # list of enemies already hit
 dashAngle = 0
 dashSpeed = 20  # constant
@@ -589,7 +589,7 @@ while deathTimer != 0:
         manaChargeDelay[0] += -1
         if manaChargeDelay[0] <= 0 and mana[0] < mana[1]:
             mana[0] += manaUseSpeed[1] / 60
-    # stop powerup if run out of mana
+    # stop time slow if run out of mana
     if mana[0] <= 0:
         timeSlow[0] = 1.0
         timeSlow[1] = 1.0
@@ -597,8 +597,8 @@ while deathTimer != 0:
 
     # ------------ POWERUP STUFF ---------- #
     # spawn powerup
-    if -2 <= powerupCD <= 0:
-        powerupCD -= 5
+    if -9 <= powerupCD <= 0:
+        powerupCD -= 10
         # set random location
         powerupCoords[0] = random.randint(140, 940)
         powerupCoords[1] = random.randint(40, 540)
@@ -631,9 +631,9 @@ while deathTimer != 0:
             if health[0] > health[1]:
                 health[0] = health[1]
 
-        # increase attack speed for 8 sec and makes guns have inf. ammo
+        # increase attack speed for 12 sec and makes guns have inf. ammo
         elif powerupType == "ammoPack":
-            activePowerup = 480
+            activePowerup = 720
             for i in range(3):
                 relCD[i] = -4
                 wpnAmmo[i] = -1
@@ -643,7 +643,7 @@ while deathTimer != 0:
         # this is derpy, move the powerup so that the player cant repeatedly get it
         powerupCoords[0] = -200
         powerupCoords[1] = -200
-        powerupCD = random.randint(900, 1800)
+        powerupCD = random.randint(800, 1400)
 
     # draw powerup
     if powerupCD <= 0:
@@ -655,7 +655,7 @@ while deathTimer != 0:
 
     # do the effects of powerups
     if activePowerup > 0 and powerupType == "ammoPack":
-        fireCD -= 1 * timeSlow[0] / 2  # tick it down AGAIN!! by half
+        fireCD -= 1 * timeSlow[0] / 2  # tick it down AGAIN!! by half, effectively a 50% firerate boost
         # draw a yellow aura around the player
         draw_aura((200, 200, 90), 24, 8)
     if -2 <= activePowerup <= 0 and powerupType == "ammoPack":
